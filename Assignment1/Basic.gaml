@@ -137,6 +137,9 @@ experiment Festival type: gui {
 	parameter "Initial number of stores: " var: nbStores min: 4 max: 50 category: "Initial Numbers";
 	parameter "Initial number of visitors: " var: nbVisitors min: 10 max: 500 category: "Initial Numbers";
 	
+	parameter "Maximum food storage per visitor: " var: foodMax min: 1.0 max: 50.0 category: "Consumption";
+	parameter "Maximum drinks storage per visitor: " var: drinksMax min: 1.0 max: 50.0 category: "Consumption"; 
+	
 	output {
 		display main_display {
 			grid FestivalCell lines: #lightgrey;

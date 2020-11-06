@@ -116,30 +116,36 @@ species Visitor skills: [moving] {
 			
 			if(self.providesInformation and myself.drinksStorage = 0 and visitClosestStall) {
 				myself.targetStall <- DrinksStore closest_to(myself);
+				write myself.name + " got location of " + myself.targetStall.name;
 				return;
 			}
 			
 			if(self.providesInformation and myself.drinksStorage = 0 and !visitClosestStall) {
 				myself.targetStall <- one_of(DrinksStore);
+				write myself.name + " got location of " + myself.targetStall.name;
 				return;
 			}
 			
 			if(self.providesInformation and myself.foodStorage = 0 and visitClosestStall) {
 				myself.targetStall <- FoodStore closest_to(myself);
+				write myself.name + " got location of " + myself.targetStall.name;
 				return;
 			}
 			
 			if(self.providesInformation and myself.foodStorage = 0 and !visitClosestStall) {
 				myself.targetStall <- one_of(FoodStore);
+				write myself.name + " got location of " + myself.targetStall.name;
 				return;
 			}
 			
 			if(self.sellsFood) {
 				myself.foodStorage <- foodMax;
+				write myself.name + " replenished foodStorage at " + self.name;
 			}
 			
 			if(self.sellsDrinks) {
 				myself.drinksStorage <- drinksMax;
+				write myself.name + " replenished drinksStorage at " + self.name;
 			}
 			
 			myself.targetStall <- nil;

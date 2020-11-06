@@ -80,8 +80,8 @@ species Visitor skills: [moving] {
 	Stall targetStall <- nil;
 	
 	float size <- 0.8;
-	rgb color <- rgb(100, 110, (255 - (int(145 * (1 - foodStorage))))) update: rgb(100, 110, (255 - (int(145 * (1 - foodStorage)))));
-	// Todo: Change color based on not only food but also drinks
+	rgb color <- rgb(100, 110, (255 - (int(145 * (1 - min(foodStorage, drinksStorage)))))) 
+			update: rgb(100, 110, (255 - (int(145 * (1 - min(foodStorage, drinksStorage))))));
 	
 	reflex random_move when: foodStorage > 0 and drinksStorage > 0 {
 		do wander;

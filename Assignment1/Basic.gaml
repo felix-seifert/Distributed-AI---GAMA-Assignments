@@ -10,8 +10,8 @@ model BasicFestival
 
 global {
 	
-	int gridWidth <- 100;
-	int gridHeight <- 100;
+	int gridWidth <- 50;
+	int gridHeight <- 50;
 	
 	// Food and beverage attributes for visitors
 	float foodMax <- 1.0;
@@ -74,12 +74,16 @@ species DrinksStore parent: Stall {
 
 species Visitor skills: [moving] {
 	
-	float foodStorage <- rnd(foodMin, foodMax, foodReduction) min: foodMin max: foodMax update: foodStorage - foodReduction;
-	float drinksStorage <- rnd(drinksMin, drinksMax, drinksReduction) min: drinksMin max: drinksMax update: drinksStorage - drinksReduction;
+	float foodStorage <- rnd(foodMin, foodMax, foodReduction) 
+			min: foodMin max: foodMax 
+			update: foodStorage - foodReduction;
+	float drinksStorage <- rnd(drinksMin, drinksMax, drinksReduction) 
+			min: drinksMin max: drinksMax 
+			update: drinksStorage - drinksReduction;
 	
 	Stall targetStall <- nil;
 	
-	float size <- 0.8;
+	float size <- 0.6;
 	rgb color <- rgb(100, 110, (255 - (int(145 * (1 - min(foodStorage, drinksStorage)))))) 
 			update: rgb(100, 110, (255 - (int(145 * (1 - min(foodStorage, drinksStorage))))));
 	

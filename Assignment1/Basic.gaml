@@ -45,9 +45,9 @@ species Stall {
 	float size <- 1.0;
 	rgb color <- #white;
 	
-	bool information <- false;
-	bool food <- false;
-	bool drinks <- false;
+	bool providesInformation <- false;
+	bool sellsFood <- false;
+	bool sellsDrinks <- false;
 		
 	aspect default {
 		draw circle(size) at: location color: color;
@@ -55,7 +55,7 @@ species Stall {
 }
 
 species InformationCentre parent: Stall {
-	bool information <- true;
+	bool providesInformation <- true;
 	rgb color <- #red;
 	
 	list<FoodStore> foodStores;
@@ -63,30 +63,31 @@ species InformationCentre parent: Stall {
 }
 
 species FoodStore parent: Stall {
-	bool food <- true;
+	bool sellsFood <- true;
 	rgb color <- #orange;
 }
 
 species DrinksStore parent: Stall {
-	bool drinks <- true;
+	bool sellsDrinks <- true;
 	rgb color <- #yellow;
 }
 
 species Visitor skills: [moving] {
 	
-	float food <- rnd(foodMin, foodMax, foodReduction) min: foodMin max: foodMax update: food - foodReduction;
-	float drinks <- rnd(drinksMin, drinksMax, drinksReduction) min: drinksMin max: drinksMax update: drinks - drinksReduction;
+	float foodStorage <- rnd(foodMin, foodMax, foodReduction) min: foodMin max: foodMax update: foodStorage - foodReduction;
+	float drinksStorage <- rnd(drinksMin, drinksMax, drinksReduction) min: drinksMin max: drinksMax update: drinksStorage - drinksReduction;
 	
 	Stall targetStall <- nil;
 	
 	float size <- 0.8;
-	rgb color <- rgb(100, 110, (255 - (int(145 * (1 - food))))) update: rgb(100, 110, (255 - (int(145 * (1 - food)))));
+	rgb color <- rgb(100, 110, (255 - (int(145 * (1 - foodStorage))))) update: rgb(100, 110, (255 - (int(145 * (1 - foodStorage)))));
+	// Todo: Change color based on not only food but also drinks
 	
-	reflex random_move when: food > 0 and drinks > 0 {
+	reflex random_move when: foodStorage > 0 and drinksStorage > 0 {
 		do wander;
 	}
 	
-	reflex setTargetPointToInfoCentre when: (food = 0 or drinks = 0) and targetStall = nil {
+	reflex setTargetPointToInfoCentre when: (foodStorage = 0 or drinksStorage = 0) and targetStall = nil {
 		targetStall <- InformationCentre closest_to(self);
 	}
 	

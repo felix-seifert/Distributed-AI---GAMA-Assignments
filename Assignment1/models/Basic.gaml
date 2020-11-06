@@ -25,6 +25,8 @@ global {
 	int nbStores <- 4;
 	int nbVisitors <- 10;
 	
+	bool visitClosestStall <- true;
+	
 	init {
 		int nbFoodStores <- rnd(int(nbStores/4), nbStores - int(nbStores/4));
 		int nbDrinksStores <- nbStores - nbFoodStores;
@@ -43,20 +45,25 @@ global {
 
 species Stall {
 	float size <- 1.0;
-	rgb color <- #white;
+	rgb color <- #red;
+	image_file icon <- nil;
 	
 	bool providesInformation <- false;
 	bool sellsFood <- false;
 	bool sellsDrinks <- false;
 		
 	aspect default {
+		if(icon != nil) {
+			draw icon size: 3.5 * size;
+			return;
+		}
 		draw circle(size) at: location color: color;
 	}
 }
 
 species InformationCentre parent: Stall {
 	bool providesInformation <- true;
-	rgb color <- #red;
+	image_file icon <- image_file("../includes/data/info.png");
 	
 	list<FoodStore> foodStores;
 	list<DrinksStore> drinksStores;
@@ -64,12 +71,12 @@ species InformationCentre parent: Stall {
 
 species FoodStore parent: Stall {
 	bool sellsFood <- true;
-	rgb color <- #orange;
+	image_file icon <- image_file("../includes/data/food.png");
 }
 
 species DrinksStore parent: Stall {
 	bool sellsDrinks <- true;
-	rgb color <- #yellow;
+	image_file icon <- image_file("../includes/data/drinks.png");
 }
 
 species Visitor skills: [moving] {
@@ -92,7 +99,11 @@ species Visitor skills: [moving] {
 	}
 	
 	reflex setTargetPointToInfoCentre when: (foodStorage = 0 or drinksStorage = 0) and targetStall = nil {
-		targetStall <- InformationCentre closest_to(self);
+		if(visitClosestStall) {
+			targetStall <- InformationCentre closest_to(self);
+			return;
+		}
+		targetStall <- one_of(InformationCentre);
 	}
 	
 	reflex moveToTarget when: targetStall != nil {
@@ -103,13 +114,23 @@ species Visitor skills: [moving] {
 		
 		ask targetStall {
 			
-			if(self.providesInformation and myself.drinksStorage = 0) {
+			if(self.providesInformation and myself.drinksStorage = 0 and visitClosestStall) {
 				myself.targetStall <- DrinksStore closest_to(myself);
 				return;
 			}
 			
-			if(self.providesInformation and myself.foodStorage = 0) {
+			if(self.providesInformation and myself.drinksStorage = 0 and !visitClosestStall) {
+				myself.targetStall <- one_of(DrinksStore);
+				return;
+			}
+			
+			if(self.providesInformation and myself.foodStorage = 0 and visitClosestStall) {
 				myself.targetStall <- FoodStore closest_to(myself);
+				return;
+			}
+			
+			if(self.providesInformation and myself.foodStorage = 0 and !visitClosestStall) {
+				myself.targetStall <- one_of(FoodStore);
 				return;
 			}
 			
@@ -143,6 +164,8 @@ experiment Festival type: gui {
 	
 	parameter "Maximum food storage per visitor: " var: foodMax min: 1.0 max: 50.0 category: "Consumption";
 	parameter "Maximum drinks storage per visitor: " var: drinksMax min: 1.0 max: 50.0 category: "Consumption"; 
+	
+	parameter "Visit closes stall (random stall if false)" var: visitClosestStall category: "Display Options";
 	
 	output {
 		display main_display {

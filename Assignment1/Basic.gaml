@@ -97,6 +97,28 @@ species Visitor skills: [moving] {
 	
 	reflex interactWithStall when: targetStall != nil and location distance_to(targetStall.location) < 2 {
 		
+		ask targetStall {
+			
+			if(self.providesInformation and myself.drinksStorage = 0) {
+				myself.targetStall <- DrinksStore closest_to(myself);
+				return;
+			}
+			
+			if(self.providesInformation and myself.foodStorage = 0) {
+				myself.targetStall <- FoodStore closest_to(myself);
+				return;
+			}
+			
+			if(self.sellsFood) {
+				myself.foodStorage <- foodMax;
+			}
+			
+			if(self.sellsDrinks) {
+				myself.drinksStorage <- drinksMax;
+			}
+			
+			myself.targetStall <- nil;
+		}
 	}
 	
 	aspect default {

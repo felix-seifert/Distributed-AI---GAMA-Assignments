@@ -1,6 +1,7 @@
 /**
 * Name: BasicFestival
-* Festival with visitors and stores 
+* Festival with visitors and stores. Visitors get information about location of food and 
+* drinks stalls where they then replenish their food and drinks storages.
 * Author: Marco Molinari <molinarimarco8@gmail.com>, Felix Seifert <mail@felix-seifert.com>
 */
 
@@ -8,8 +9,8 @@ model BasicFestival
  
 global {
  
-	int gridWidth <- 4;
-	int gridHeight <- 4;
+	int gridWidth <- 10;
+	int gridHeight <- 10;
 	bool displayEntityName <- false;
  
 	// Food and beverage attributes for visitors
@@ -37,7 +38,7 @@ global {
 	int nbInformationCentres <- 1;
 	int nbStores <- 4;
 	int nbVisitors <- 10;
-	int nbGuards <- 0;
+	int nbGuards <- 0;		// Functionality of bad behaviour gets activated when at least one guard exists.
  
 	bool visitClosestStall <- true;
  
@@ -124,7 +125,7 @@ species Guard skills: [moving] {
 	}
 	
 	
-	reflex moveToTarget when: goToBadBehaviourVisitor = true { //get closer to the suspect
+	reflex moveToTarget when: goToBadBehaviourVisitor = true {
 		
 		if (self distance_to(badBehaviourVisitorsOnSight[0]) > 2.0) {
 			do goto target: badBehaviourVisitorsOnSight[0];
@@ -169,14 +170,15 @@ species Visitor skills: [moving] {
 	float drinksStorage <- rnd(drinksMin, drinksMax, drinksReduction) 
 			min: drinksMin max: drinksMax 
 			update: drinksStorage - drinksReduction;
- 
+
 	Stall targetStall <- nil;
 	Guard targetGuard <- nil;
 	Visitor caughtVisitor <- nil;
  
 	float size <- 0.6;
+	// decrease tone of blue with decreasing food/drink storage
 	rgb color <- rgb(80, 80, (255 - (int(145 * (1 - min(foodStorage, drinksStorage)))))) 
-			update: rgb(80, 80, (255 - (int(145 * (1 - min(foodStorage, drinksStorage))))));	//decrease tone of blue with rising food/drink necessity
+			update: rgb(80, 80, (255 - (int(145 * (1 - min(foodStorage, drinksStorage))))));
  
 	float exploitingMemoryRate <- 0.5;		// how much Visitor relies on its memory about drinks/food stalls
 	float exploitingMemoryVariation <- 0.1;	// variation (+,-) for each memory change, depending on use of memory
@@ -219,11 +221,11 @@ species Visitor skills: [moving] {
 		targetGuard <- nil;
 		targetStall <- InformationCentre closest_to(self);
 		
-		if (location distance_to(targetStall) < 2.0){
 			goingToInformationCentreToReport <- false;
 			goingToGuardToReport <- true;
+		if(location distance_to(targetStall) < 2.0) {
 			
-			if caughtVisitor in criminalVisitors or dead(caughtVisitor) { //if criminal was already reported, free the Visitor
+			if(caughtVisitor in criminalVisitors or dead(caughtVisitor)) { //if criminal was already reported, free the Visitor
 				
 				caughtVisitor <- nil;
 				targetGuard <- nil;
@@ -356,17 +358,12 @@ species Visitor skills: [moving] {
 				//write myself.name + " replenished drinksStorage at " + self.name;
 			}
  
-			if(flip(myself.badBehaviourRate)) {
+			if(flip(myself.badBehaviourRate) and nbGuards > 0) {
 				myself.badBehaviour <- true;
 				myself.color <- rgb(255, 0, 234);
-				//write "Bad Behaviour!";
 				totalBadBehaving <- totalBadBehaving + 1;
-				write "Total Bad Behaving : " + totalBadBehaving;
+				write "Total bad behaving visitors: " + totalBadBehaving;
 			}
-			
-//			if(myself.badBehaviour = true) {
-//				myself.badBehaviour <- false;
-//			}
  
 			if(flip(memoryRate) and !(self in myself.locationMemory)) {
 				add self to: myself.locationMemory;
@@ -431,8 +428,8 @@ experiment Festival type: gui {
 	parameter "Maximum food storage per visitor: " var: foodMax min: 1.0 max: 50.0 category: "Consumption";
 	parameter "Maximum drinks storage per visitor: " var: drinksMax min: 1.0 max: 50.0 category: "Consumption"; 
  
-	parameter "Display entity names" var: displayEntityName category: "Display Options";
-	parameter "Visit closes stall (random stall if false)" var: visitClosestStall category: "Display Options";
+	parameter "Display entity names" var: displayEntityName category: "Options";
+	parameter "Visit closes stall (random stall if false)" var: visitClosestStall category: "Options";
 	
 	parameter "Allow location memory of visitors" var: allowMemory category: "Advanced Options";
 	parameter "Allow interaction between visitors" var: allowInteraction category: "Advanced Options";

@@ -110,7 +110,7 @@ species Guard skills: [moving] {
 	bool goToBadBehaviourVisitor <- false; 	// true if Guard heads to capture criminal Visitor
 
  
-	reflex identifyBadBehaviourVisitor when: (followWitnessVisitor = true and badBehaviourVisitorsOnSight!=[]) { //identify the suspect
+	reflex identifyBadBehaviourVisitor when: followWitnessVisitor = true and badBehaviourVisitorsOnSight != [] {
  
 		ask self.badBehaviourVisitorsOnSight {
 			
@@ -129,18 +129,16 @@ species Guard skills: [moving] {
 		
 		if (self distance_to(badBehaviourVisitorsOnSight[0]) > 2.0) {
 			do goto target: badBehaviourVisitorsOnSight[0];
+			return;
 		}
+			
+		//write string(badBehaviourVisitorsOnSight[0]) + " was caught misbehaving by " + string(self);
+		goToBadBehaviourVisitor <- false;
 		
-		else{
+		ask self.badBehaviourVisitorsOnSight[0] {
+			self.visitorDie <- true; //if true, triggers the considered Visitor to leave the simulation
+			myself.badBehaviourVisitorsOnSight <- []; //empties the list of criminals and restart
 			
-			//write string(badBehaviourVisitorsOnSight[0]) + " was caught misbehaving by " + string(self);
-			goToBadBehaviourVisitor <- false;
-			
-			ask self.badBehaviourVisitorsOnSight[0] {
-				self.visitorDie <- true; //if true, triggers the considered Visitor to leave the simulation
-				myself.badBehaviourVisitorsOnSight <- []; //empties the list of criminals and restart
-				
-			}			
 		}
 	}
 
@@ -183,81 +181,60 @@ species Visitor skills: [moving] {
 	float exploitingMemoryRate <- 0.5;		// how much Visitor relies on its memory about drinks/food stalls
 	float exploitingMemoryVariation <- 0.1;	// variation (+,-) for each memory change, depending on use of memory
 	
-	list<Stall> locationMemory;		// list of memorised locations
+	list<Stall> locationMemory;			// list of memorised locations
 	
 	bool badBehaviour <- false;			// true for bad behaviour of Visitor
 	float badBehaviourRate <- rnd(-criminalRate/4, criminalRate);
 	
-	bool badBehaviourCaught <- false; 		// true if Visitor gets caught by another Visitor
-	bool witnessedBadBehaviour <- false; 	// true if Visitor witnessed bad behaviour of another Visitor
+	bool badBehaviourCaught <- false; 	// true if Visitor gets caught by another Visitor
 	
 	bool visitorDie <- false;
-	
-	bool goingToInformationCentreToReport <- false;
-	bool goingToGuardToReport <- false;
-	bool goingToBadBehaviourVisitorToReport <- false;
 	
 	/*
 	 * Search for badly behaving visitors in surroundings
 	 */
-	reflex discoverBadVisitor when: !(self.witnessedBadBehaviour) and nbGuards > 0 {
-		
-		if (Visitor at_distance(guardRange) != []) {
+	reflex discoverBadVisitor when: caughtVisitor = nil and nbGuards > 0 {
 			
-			loop visitorOnSight over: Visitor at_distance(guardRange) {
-				
-				if((visitorOnSight.badBehaviour = true)){
-					caughtVisitor <- visitorOnSight;
-					witnessedBadBehaviour <- true;
-					goingToInformationCentreToReport <- true;
-					//write string(self) + " discovered " + string(visitorOnSight) + " behaving badly.";
-					break;
-				}
+		loop visitorOnSight over: Visitor at_distance(guardRange) {
+			
+			if((visitorOnSight.badBehaviour = true)){
+				caughtVisitor <- visitorOnSight;
+				targetStall <- InformationCentre closest_to(self);
+				//write string(self) + " discovered " + string(visitorOnSight) + " behaving badly.";
+				break;
 			}
 		}
 	}
 	
-	reflex goToInformationCentreToReport when: goingToInformationCentreToReport = true and nbGuards > 0 {
-		targetGuard <- nil;
-		targetStall <- InformationCentre closest_to(self);
+	reflex goToInformationCentreToReport when: caughtVisitor != nil and targetStall != nil 
+			and location distance_to(targetStall) < 2.0 and nbGuards > 0 {
 		
-			goingToInformationCentreToReport <- false;
-			goingToGuardToReport <- true;
-		if(location distance_to(targetStall) < 2.0) {
-			
-			if(caughtVisitor in criminalVisitors or dead(caughtVisitor)) { //if criminal was already reported, free the Visitor
-				
-				caughtVisitor <- nil;
-				targetGuard <- nil;
-				witnessedBadBehaviour <- false;				
-				goingToGuardToReport <- false;
-				goingToInformationCentreToReport <- false;
-				goingToBadBehaviourVisitorToReport <- false;
-				
-				return;
-			}
-				
-			add caughtVisitor to: criminalVisitors;
-			//write string(self) + " reported " + string(caughtVisitor) + " to an information centre.";
-		}
-	}
-	
-	reflex goToGuardToReport when: goingToGuardToReport = true and nbGuards > 0 {
 		targetStall <- nil;
-		targetGuard <- one_of(Guard);
 		
-		if (targetGuard.badBehaviourVisitorsOnSight = []) {
-			if (location distance_to(targetGuard) < communicationDistance) {
+		// if criminal was already reported, free Visitor
+		if(caughtVisitor in criminalVisitors or dead(caughtVisitor)) {
+			caughtVisitor <- nil;
+			return;
+		}
+			
+		add caughtVisitor to: criminalVisitors;
+		targetGuard <- one_of(Guard);
+		//write string(self) + " reported " + string(caughtVisitor) + " to an information centre.";
+	}
+	
+	reflex goToGuardToReport when: targetGuard != nil and nbGuards > 0 {
+		targetStall <- nil;
+		
+		if (targetGuard.badBehaviourVisitorsOnSight = [] 
+				and location distance_to(targetGuard) < communicationDistance) {
 				
-				ask targetGuard {
-					self.followWitnessVisitor <- true;
-					add myself.caughtVisitor to: self.badBehaviourVisitorsOnSight;
-				}
-				
-				goingToGuardToReport <- false;
-				goingToBadBehaviourVisitorToReport <- true;
-				//write string(self) + " reported " + string(caughtVisitor) + " to " + string(targetGuard) + ".";
-			}	
+			ask targetGuard {
+				self.followWitnessVisitor <- true;
+				add myself.caughtVisitor to: self.badBehaviourVisitorsOnSight;
+			}
+			
+			targetGuard <- nil;
+			//write string(self) + " reported " + string(caughtVisitor) + " to " + string(targetGuard) + ".";
 		}
 	}
 	
@@ -266,43 +243,39 @@ species Visitor skills: [moving] {
 	 */
 	reflex stopHelpingGuard when: caughtVisitor != nil and dead(caughtVisitor) and nbGuards > 0 {
 		caughtVisitor <- nil;
-		targetGuard <- nil;
-		witnessedBadBehaviour <- false;
-		goingToBadBehaviourVisitorToReport <- false; //true if the Visitor is following the Guard to show the criminal's position
 	}
 	
 	reflex caughtVisitorDies when: self.visitorDie = true {
-		write string(self) + " dies.";
+		write string(self) + " got removed from festival.";
 		totalCaughtBadBehaving <- totalCaughtBadBehaving + 1;
 		//write "Total caught visitors with bad behaviour: " + totalCaughtBadBehaving;
-		self.visitorDie <- false;
-		badBehaviour <- false;
 		do die;
 	}
 	
 	reflex random_move when: foodStorage > 0 and drinksStorage > 0 
-			and !(self.badBehaviourCaught) and !(self.witnessedBadBehaviour) {
+			and !(self.badBehaviourCaught) and caughtVisitor = nil {
 		do wander;
 	}
 	
 	reflex moveToTarget when: targetStall != nil or targetGuard != nil or caughtVisitor != nil {
 		
 		if(targetStall != nil) {
-			do goto target: targetStall;			
+			do goto target: targetStall;
+			return;	
 		}
 
-		if(targetGuard != nil and witnessedBadBehaviour) {
+		if(targetGuard != nil and caughtVisitor != nil) {
 			do goto target: targetGuard;
+			return;
 		}
 		
-		if(caughtVisitor != nil and goingToBadBehaviourVisitorToReport = true) {
+		if(caughtVisitor != nil and targetGuard = nil and targetStall = nil) {
 			do goto target: caughtVisitor;
-			targetGuard <- nil;
 		}
 	}
 	
 	reflex setTargetPointToKnownStall when: (foodStorage = 0 or drinksStorage = 0) 
-			and targetStall = nil and !(self.witnessedBadBehaviour) 
+			and targetStall = nil and caughtVisitor = nil 
 			and allowMemory and self.locationMemory != [] and flip(exploitingMemoryRate) {
 		
 		self.exploitingMemoryRate <- max(self.exploitingMemoryRate - exploitingMemoryVariation, 0);
@@ -310,7 +283,7 @@ species Visitor skills: [moving] {
 	}
  
 	reflex setTargetPointToInfoCentre when: (foodStorage = 0 or drinksStorage = 0) 
-			and targetStall = nil and !(self.witnessedBadBehaviour) {
+			and targetStall = nil and caughtVisitor = nil {
 				
 		if(visitClosestStall) {
 			targetStall <- InformationCentre closest_to(self);
@@ -320,7 +293,7 @@ species Visitor skills: [moving] {
 	}
 	
 	reflex interactWithTargetStall when: targetStall != nil and location distance_to(targetStall.location) < 2 
-			and !(self.witnessedBadBehaviour) {
+			and caughtVisitor = nil {
  
 		ask targetStall {
  
@@ -376,7 +349,7 @@ species Visitor skills: [moving] {
 	}
  
 	reflex interactWithOtherVisitor when: targetStall != nil and targetStall.providesInformation 
-			and allowInteraction and flip(interactionRate) and !(self.witnessedBadBehaviour) {
+			and allowInteraction and flip(interactionRate) and caughtVisitor = nil {
 		
 		// interaction between Visitors to exchange missing information about stalls locations
 		if (Visitor at_distance(communicationDistance) != []){
@@ -433,7 +406,7 @@ experiment Festival type: gui {
 	
 	parameter "Allow location memory of visitors" var: allowMemory category: "Advanced Options";
 	parameter "Allow interaction between visitors" var: allowInteraction category: "Advanced Options";
-	parameter "Number of guards" var: nbGuards min: 0 max: 5 category: "Advanced Options";
+	parameter "Number of guards" var: nbGuards min: 0 max: 1 category: "Advanced Options";
  
 	output {
 		display main_display {

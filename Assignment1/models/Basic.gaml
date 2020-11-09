@@ -27,7 +27,6 @@ global {
 	
 	float interactionRate <- 0.1;		// 10% chance of talking with another close Visitor
 	float memoryRate <- 0.9; 			// 90% of chance of remembering place just visited
-	float forgetRate <- 0.0005; 		// 0.5% chance of forgetting one known place
 	float communicationDistance <- 3.0;	// distance for communication between agents
 	int successfulInteractions <- 0; 	// counter of all the successful memory interactions between two Visitors
 	

@@ -10,16 +10,16 @@ model BasicFestival
  
 global {
  
-	int gridWidth <- 5;
-	int gridHeight <- 5;
+	int gridWidth <- 4;
+	int gridHeight <- 4;
  
 	// Food and beverage attributes for visitors
 	float foodMax <- 1.0;
 	float foodMin <- 0.0;
-	float foodReduction <- 0.001;
+	float foodReduction <- 0.003;
 	float drinksMax <- 1.0;
 	float drinksMin <- 0.0;
-	float drinksReduction <- 0.002;
+	float drinksReduction <- 0.005;
 	float interactionRate <- 0.1; //10% chance of talking with another close Visitor
 	float memoryRate <- 0.9; //90% of chance of remembering the place just visited
 
@@ -29,12 +29,12 @@ global {
 	float guardRange <- 4.0; //range for checking bad behaviours among other Visitors
 	int totalBadBehaving <- 0; //counter of all the bad behaviours
 	int totalCaughtBadBehaving <- 0; //counter of deads
-	float criminalRate <- 0.005; //every Visitors have a chance of rnd(0, criminalRate)*100% to commit a bad action
+	float criminalRate <- 0.003; //every Visitors have a chance of rnd(0, criminalRate)*100% to commit a bad action
 	list<Visitor> criminalVisitors <- []; //list of reported Visitors
  
-	int nbInformationCentres <- 2;
-	int nbStores <- 20;
-	int nbVisitors <- 40;
+	int nbInformationCentres <- 1;
+	int nbStores <- 4;
+	int nbVisitors <- 10;
 	int nbGuards <- 1;
  
 	bool visitClosestStall <- true;
@@ -167,7 +167,7 @@ species Visitor skills: [moving] {
 	bool badBehaviourCaught <- false; //true if the Visitor gets caught by another Visitor
 	bool visitorDie <- false;
 
-	float badBehaviourRate <- rnd(-criminalRate, criminalRate);
+	float badBehaviourRate <- rnd(-criminalRate/4, criminalRate);
 	bool witnessedBadBehaviour <- false; //true if a Visitor witnessed the bad behaviour of another Visitor
 	list<Visitor> badBehaviourVisitorsOnSight <- [];
 	list<Visitor> visitorsOnSight <- [];
@@ -232,7 +232,7 @@ species Visitor skills: [moving] {
 			goingToInformationCentreToReport <- false;
 			goingToGuardToReport <- true;
 			
-			if caughtVisitor in criminalVisitors { //if the criminal was already reported, free the Visitor
+			if caughtVisitor in criminalVisitors or dead(caughtVisitor) { //if the criminal was already reported, free the Visitor
 				
 				caughtVisitor <- nil;
 				targetGuard <- nil;
@@ -323,7 +323,7 @@ species Visitor skills: [moving] {
 	reflex visitKnownStall when: targetStall = nil and self.locationMemory != [] and flip(exploitingMemoryRate) and (foodStorage = 0 or drinksStorage = 0) and !(self.witnessedBadBehaviour) and allowMemory{
 		self.exploitingMemoryRate <- max(self.exploitingMemoryRate - exploitingMemoryVariation, 0); //modify the rely on the memory for the next choices
 		self.targetStall <- self.locationMemory[rnd(length(self.locationMemory) - 1)]; // pick one random location memory as new destination
-		write self.exploitingMemoryRate;
+		//write self.exploitingMemoryRate;
 	}
  
 	reflex interactWithVisitor when: targetStall = InformationCentre closest_to(self) and flip(interactionRate) and (foodStorage = 0 or drinksStorage = 0) and !(self.witnessedBadBehaviour) and allowInteraction{
@@ -405,6 +405,10 @@ species Visitor skills: [moving] {
 				totalBadBehaving <- totalBadBehaving + 1;
 				write "Total Bad Behaving :" + totalBadBehaving;
 			}
+			
+//			if(myself.badBehaviour = true) {
+//				myself.badBehaviour <- false;
+//			}
  
 			if(flip(memoryRate) and !(self in myself.locationMemory)) {
 				add self to: myself.locationMemory;

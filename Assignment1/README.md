@@ -40,13 +40,15 @@ Another way to extend the memory of known locations, the visitors can interact w
 
 If another visitor (a peer) is within `communicationDistance`, visitors can exchange information. The information echange happen also only with a probability, the rate defined in `interactionRate`, and if the content of the two memories has a difference. This interaction can be realised with color changes of the interacting visitors.
 
-## Removal of Bad Behaving Agents
+## Removal of Bad Behaving Agents (Advanced Option)
 
 With a probability of `criminalRate`, each visitor can behave badly. Idea is to realise a bad beaviour and scole this bad behaviour.
 
 When any visitor performs an interaction with a stall, it can become a criminal which then gets stored in its variable `badBehaviour`.
 
 Each visitor spies on al the other visitors within `guardRange` to check if any visitor has the active flas `badBehaviour`. In case a visitor realises such bad behaviour, the observing visitor approaches an information centre, reports his observation and finds a guard. The guard receives the information about the location of the criminal and approaches him/her. Once the guard arrives, he/she will delete the suspect visitor from the simulation.
+
+To activate the option of a guard who tries to remove bad behaving visitors, set the parameter for the number of guards greater than zero.
 
 Due to some particular conditions of the Stalls disposition on the map, it may happens that the crime-reporting Visitors will constantly follow the Guard. This is one of the "safe" fix to prevent this problem:
 

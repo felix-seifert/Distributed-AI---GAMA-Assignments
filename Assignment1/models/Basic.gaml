@@ -39,7 +39,7 @@ global {
 	int nbInformationCentres <- 1;
 	int nbStores <- 4;
 	int nbVisitors <- 10;
-	int nbGuards <- 1;
+	int nbGuards <- 0;
  
 	bool visitClosestStall <- true;
  
@@ -200,7 +200,7 @@ species Visitor skills: [moving] {
 	/*
 	 * Search for badly behaving visitors in surroundings
 	 */
-	reflex discoverBadVisitor when: !(self.witnessedBadBehaviour) {
+	reflex discoverBadVisitor when: !(self.witnessedBadBehaviour) and nbGuards > 0 {
 		
 		if (Visitor at_distance(guardRange) != []) {
 			
@@ -217,7 +217,7 @@ species Visitor skills: [moving] {
 		}
 	}
 	
-	reflex goToInformationCentreToReport when: goingToInformationCentreToReport = true {
+	reflex goToInformationCentreToReport when: goingToInformationCentreToReport = true and nbGuards > 0 {
 		targetGuard <- nil;
 		targetStall <- InformationCentre closest_to(self);
 		
@@ -242,7 +242,7 @@ species Visitor skills: [moving] {
 		}
 	}
 	
-	reflex goToGuardToReport when: goingToGuardToReport = true {
+	reflex goToGuardToReport when: goingToGuardToReport = true and nbGuards > 0 {
 		targetStall <- nil;
 		targetGuard <- one_of(Guard);
 		
@@ -264,7 +264,7 @@ species Visitor skills: [moving] {
 	/*
 	 * Stop following the guard once the arrest is done
 	 */
-	reflex stopHelpingGuard when: caughtVisitor != nil and dead(caughtVisitor) {
+	reflex stopHelpingGuard when: caughtVisitor != nil and dead(caughtVisitor) and nbGuards > 0 {
 		caughtVisitor <- nil;
 		targetGuard <- nil;
 		witnessedBadBehaviour <- false;
@@ -363,7 +363,7 @@ species Visitor skills: [moving] {
 				myself.color <- rgb(255, 0, 234);
 				//write "Bad Behaviour!";
 				totalBadBehaving <- totalBadBehaving + 1;
-				write "Total Bad Behaving :" + totalBadBehaving;
+				write "Total Bad Behaving : " + totalBadBehaving;
 			}
 			
 //			if(myself.badBehaviour = true) {
@@ -429,7 +429,6 @@ experiment Festival type: gui {
 	parameter "Initial number of information centres: " var: nbInformationCentres min: 1 max: 5 category: "Initial Numbers";
 	parameter "Initial number of stores: " var: nbStores min: 4 max: 50 category: "Initial Numbers";
 	parameter "Initial number of visitors: " var: nbVisitors min: 10 max: 500 category: "Initial Numbers";
-	parameter "Initial number of guards: " var: nbGuards min: 1 max: 25 category: "Initial Numbers";
  
 	parameter "Maximum food storage per visitor: " var: foodMax min: 1.0 max: 50.0 category: "Consumption";
 	parameter "Maximum drinks storage per visitor: " var: drinksMax min: 1.0 max: 50.0 category: "Consumption"; 
@@ -439,6 +438,7 @@ experiment Festival type: gui {
 	
 	parameter "Allow location memory of visitors" var: allowMemory category: "Advanced Options";
 	parameter "Allow interaction between visitors" var: allowInteraction category: "Advanced Options";
+	parameter "Number of guards" var: nbGuards min: 0 max: 5 category: "Advanced Options";
  
 	output {
 		display main_display {

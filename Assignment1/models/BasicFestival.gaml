@@ -1,11 +1,9 @@
 /**
 * Name: BasicFestival
 * Festival with visitors and stores 
-* Author: Felix Seifert <mail@felix-seifert.com>
-* Tags: 
+* Author: Marco Molinari <molinarimarco8@gmail.com>, Felix Seifert <mail@felix-seifert.com>
 */
- 
- 
+
 model BasicFestival
  
 global {

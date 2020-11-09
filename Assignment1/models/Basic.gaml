@@ -12,6 +12,7 @@ global {
  
 	int gridWidth <- 4;
 	int gridHeight <- 4;
+	bool displayEntityName <- false;
  
 	// Food and beverage attributes for visitors
 	float foodMax <- 1.0;
@@ -20,17 +21,21 @@ global {
 	float drinksMax <- 1.0;
 	float drinksMin <- 0.0;
 	float drinksReduction <- 0.005;
-	float interactionRate <- 0.1; //10% chance of talking with another close Visitor
-	float memoryRate <- 0.9; //90% of chance of remembering the place just visited
-
-	float forgetRate <- 0.0005; //0.5% chance of forgetting one known place
-	float communicationDistance <- 3.0; //communication distance between agents
-	int successfulInteractions <- 0; //counter of all the successful memory interactions between two Visitors
-	float guardRange <- 4.0; //range for checking bad behaviours among other Visitors
-	int totalBadBehaving <- 0; //counter of all the bad behaviours
-	int totalCaughtBadBehaving <- 0; //counter of deads
-	float criminalRate <- 0.003; //every Visitors have a chance of rnd(0, criminalRate)*100% to commit a bad action
-	list<Visitor> criminalVisitors <- []; //list of reported Visitors
+	
+	bool allowInteraction <- false;		// allow interaction between Visitors
+	bool allowMemory <- false;			// allow usadge of memory
+	
+	float interactionRate <- 0.1;		// 10% chance of talking with another close Visitor
+	float memoryRate <- 0.9; 			// 90% of chance of remembering place just visited
+	float forgetRate <- 0.0005; 		// 0.5% chance of forgetting one known place
+	float communicationDistance <- 3.0;	// distance for communication between agents
+	int successfulInteractions <- 0; 	// counter of all the successful memory interactions between two Visitors
+	
+	float guardRange <- 4.0; 				// range for checking bad behaviours among other Visitors
+	int totalBadBehaving <- 0; 				// counter of all bad behaviours
+	int totalCaughtBadBehaving <- 0; 		// counter of deaths
+	float criminalRate <- 0.003; 			// every Visitor has chance of rnd(0, criminalRate)*100% to commit bad action
+	list<Visitor> criminalVisitors <- [];	// list of reported Visitors
  
 	int nbInformationCentres <- 1;
 	int nbStores <- 4;
@@ -66,12 +71,16 @@ species Stall {
 	bool sellsDrinks <- false;
  
 	aspect default {
-		if(icon != nil) {
-			draw icon size: 3.5 * size;
-			draw string(name) color:#black;
+		
+		if(displayEntityName) {
+			draw string(name) color: #black;	
+		}
+		
+		if(icon = nil) {
+			draw circle(size) at: location color: color;
 			return;
 		}
-	draw circle(size) at: location color: color;
+		draw icon size: 3.5 * size;
 	}
 }
  
@@ -92,15 +101,15 @@ species DrinksStore parent: Stall {
 	bool sellsDrinks <- true;
 	image_file icon <- image_file("../includes/data/drinks.png");
 }
- 
- 
+
 species Guard skills: [moving] {
 	float size <- 1.0;
-	image_file icon <- nil;
-	list<Visitor> badBehaviourVisitorsOnSight <- []; //list of bad behaving Visitors in guardRange
-	list<Visitor> visitorsOnSight <- []; //list of all Visitors in guardRange
-	bool followWitnessVisitor <- false; //true if the Guard is following a Visitor reporting another Visitor
-	bool goToBadBehaviourVisitor <- false; //true if the Guard is headed to capture the criminal
+	
+	list<Visitor> badBehaviourVisitorsOnSight <- [];	// list of bad behaving Visitors in guardRange
+	list<Visitor> visitorsOnSight <- []; 				// list of all Visitors in guardRange
+	
+	bool followWitnessVisitor <- false;		// true if Guard follows Visitor who is reporting another Visitor
+	bool goToBadBehaviourVisitor <- false; 	// true if Guard heads to capture criminal Visitor
 
  
 	reflex identifyBadBehaviourVisitor when: (followWitnessVisitor = true and badBehaviourVisitorsOnSight!=[]) { //identify the suspect
@@ -137,47 +146,26 @@ species Guard skills: [moving] {
 		}
 	}
 
- 
 	reflex random_move when: !(self.goToBadBehaviourVisitor) {
 		do wander;
 	}
  
-//	reflex escortBadVisitorOut when: 
- 
 	aspect default {
 		draw circle(size+0.25) color:#red;
 		draw circle(size) color: #white;
-		if (self.goToBadBehaviourVisitor = true){ //when a Visitor approaches a Guard, the Guard change it's color to red and blue
+		
+		if (self.goToBadBehaviourVisitor = true){ // Guard changes color if Visitor approaches
 			draw circle(size) color: #blue;
 		}
-		draw string(name) color:#black;
+		
+		if(displayEntityName) {
+			draw string(name) color: #black;	
+		}
 	}
 }
- 
- 
- 
-species Visitor skills: [moving] {
- 
-	float exploitingMemoryRate <- 0.5;	//how much a Visitor relies on its memory about restarants/bars
-	float exploitingMemoryVariation <- 0.1; //Variation (+,-)for each memory change, depending on the use of the memory
-	bool allowInteraction <- true; //  set this to false to deny the use of interaction between Visitors
-	bool allowMemory <- true; //set this to false to deny the use of the memory
-	list<Stall> locationMemory; //list of the location memories
-	bool badBehaviour <- false; //true for Visitors that badly behave
-	bool badBehaviourCaught <- false; //true if the Visitor gets caught by another Visitor
-	bool visitorDie <- false;
 
-	float badBehaviourRate <- rnd(-criminalRate/4, criminalRate);
-	bool witnessedBadBehaviour <- false; //true if a Visitor witnessed the bad behaviour of another Visitor
-	list<Visitor> badBehaviourVisitorsOnSight <- [];
-	list<Visitor> visitorsOnSight <- [];
+species Visitor skills: [moving] {
 	
-	bool goingToInformationCentreToReport <- false; //true if the Agent is ...
-	bool goingToGuardToReport <- false; // true if the Agent is ...
-	bool goingToBadBehaviourVisitorToReport <- false; //true if the Agent is ...
-	
-	
- 
 	float foodStorage <- rnd(foodMin, foodMax, foodReduction) 
 			min: foodMin max: foodMax 
 			update: foodStorage - foodReduction;
@@ -185,44 +173,50 @@ species Visitor skills: [moving] {
 			min: drinksMin max: drinksMax 
 			update: drinksStorage - drinksReduction;
  
- 
 	Stall targetStall <- nil;
 	Guard targetGuard <- nil;
 	Visitor caughtVisitor <- nil;
  
- 
 	float size <- 0.6;
 	rgb color <- rgb(80, 80, (255 - (int(145 * (1 - min(foodStorage, drinksStorage)))))) 
-			update: rgb(80, 80, (255 - (int(145 * (1 - min(foodStorage, drinksStorage))))));	 //decrease tone of blue with the rising food/drink necessity
-	
-
-
-	reflex discoverBadVisitor when: !(self.witnessedBadBehaviour) { //function to discover badly behaving Visitors around
-		if (Visitor at_distance(guardRange) != []){
-			self.visitorsOnSight <- Visitor at_distance(guardRange);
+			update: rgb(80, 80, (255 - (int(145 * (1 - min(foodStorage, drinksStorage))))));	//decrease tone of blue with rising food/drink necessity
  
-			loop visitorOnSight over: self.visitorsOnSight{
-				
-				if((visitorOnSight.badBehaviour = true) and !(visitorOnSight in self.badBehaviourVisitorsOnSight)){
-					add visitorOnSight to: self.badBehaviourVisitorsOnSight;
-				}
-			}
-				
-			if(self.badBehaviourVisitorsOnSight!=[]){
-				
-				witnessedBadBehaviour <- true;
-				
-				goingToInformationCentreToReport <- true;
-
-				caughtVisitor <- self.badBehaviourVisitorsOnSight[0];
-				
-				//write string(self) + " discovered " + string(self.badBehaviourVisitorsOnSight[0]) + " bad behaving.";					
+	float exploitingMemoryRate <- 0.5;		// how much Visitor relies on its memory about drinks/food stalls
+	float exploitingMemoryVariation <- 0.1;	// variation (+,-) for each memory change, depending on use of memory
+	
+	list<Stall> locationMemory;		// list of memorised locations
+	
+	bool badBehaviour <- false;			// true for bad behaviour of Visitor
+	float badBehaviourRate <- rnd(-criminalRate/4, criminalRate);
+	
+	bool badBehaviourCaught <- false; 		// true if Visitor gets caught by another Visitor
+	bool witnessedBadBehaviour <- false; 	// true if Visitor witnessed bad behaviour of another Visitor
+	
+	bool visitorDie <- false;
+	
+	bool goingToInformationCentreToReport <- false;
+	bool goingToGuardToReport <- false;
+	bool goingToBadBehaviourVisitorToReport <- false;
+	
+	/*
+	 * Search for badly behaving visitors in surroundings
+	 */
+	reflex discoverBadVisitor when: !(self.witnessedBadBehaviour) {
+		
+		if (Visitor at_distance(guardRange) != []) {
 			
+			loop visitorOnSight over: Visitor at_distance(guardRange) {
+				
+				if((visitorOnSight.badBehaviour = true)){
+					caughtVisitor <- visitorOnSight;
+					witnessedBadBehaviour <- true;
+					goingToInformationCentreToReport <- true;
+					//write string(self) + " discovered " + string(visitorOnSight) + " behaving badly.";
+					break;
+				}
 			}
 		}
 	}
-
-
 	
 	reflex goToInformationCentreToReport when: goingToInformationCentreToReport = true {
 		targetGuard <- nil;
@@ -232,39 +226,29 @@ species Visitor skills: [moving] {
 			goingToInformationCentreToReport <- false;
 			goingToGuardToReport <- true;
 			
-			if caughtVisitor in criminalVisitors or dead(caughtVisitor) { //if the criminal was already reported, free the Visitor
+			if caughtVisitor in criminalVisitors or dead(caughtVisitor) { //if criminal was already reported, free the Visitor
 				
 				caughtVisitor <- nil;
 				targetGuard <- nil;
-				targetStall <- one_of(InformationCentre); //restart from one InformationCentre
 				witnessedBadBehaviour <- false;				
 				goingToGuardToReport <- false;
 				goingToInformationCentreToReport <- false;
 				goingToBadBehaviourVisitorToReport <- false;
-				badBehaviourVisitorsOnSight <- [];
 				
 				return;
-				
 			}
-			
-			else {
 				
-				add caughtVisitor to: criminalVisitors;				
-			}
-			//write string(self) + " reported " + string(caughtVisitor) + " to the information centre.";
-			
+			add caughtVisitor to: criminalVisitors;
+			//write string(self) + " reported " + string(caughtVisitor) + " to an information centre.";
 		}
 	}
 	
-	
-	
 	reflex goToGuardToReport when: goingToGuardToReport = true {
-		
 		targetStall <- nil;
 		targetGuard <- one_of(Guard);
 		
-		if targetGuard.badBehaviourVisitorsOnSight = []{
-			if (location distance_to(targetGuard) < communicationDistance){
+		if (targetGuard.badBehaviourVisitorsOnSight = []) {
+			if (location distance_to(targetGuard) < communicationDistance) {
 				
 				ask targetGuard {
 					self.followWitnessVisitor <- true;
@@ -273,94 +257,71 @@ species Visitor skills: [moving] {
 				
 				goingToGuardToReport <- false;
 				goingToBadBehaviourVisitorToReport <- true;
-				//write string(self) + " reported " + string(caughtVisitor) + " to " + string(targetGuard);
+				//write string(self) + " reported " + string(caughtVisitor) + " to " + string(targetGuard) + ".";
 			}	
 		}
 	}
 	
-	reflex stopHelpingGuard when: badBehaviourVisitorsOnSight != [] and dead(caughtVisitor) { //Stop following the guard once the arrest is done
+	/*
+	 * Stop following the guard once the arrest is done
+	 */
+	reflex stopHelpingGuard when: caughtVisitor != nil and dead(caughtVisitor) {
 		caughtVisitor <- nil;
 		targetGuard <- nil;
-		targetStall <- one_of(InformationCentre); //Restart from one Information Centre
 		witnessedBadBehaviour <- false;
 		goingToBadBehaviourVisitorToReport <- false; //true if the Visitor is following the Guard to show the criminal's position
-		badBehaviourVisitorsOnSight <- [];
 	}
 	
-	reflex moveToTarget when: targetStall != nil or targetGuard != nil or caughtVisitor != nil {
-		
-		if (targetStall != nil) {
-			do goto target: targetStall;			
-		}
-
-		if (targetGuard != nil and witnessedBadBehaviour) {
-			do goto target: targetGuard;
-		}
-		
-		if (caughtVisitor != nil and goingToBadBehaviourVisitorToReport = true) {
-			do goto target: caughtVisitor;
-			targetGuard <- nil;
-		}
-		
-	}
- 
- 
-	reflex caughtVisitorDies when: self.visitorDie = true { //Die action
+	reflex caughtVisitorDies when: self.visitorDie = true {
 		write string(self) + " dies.";
 		totalCaughtBadBehaving <- totalCaughtBadBehaving + 1;
-		//write "Total Caught Bad Behaving :" + totalCaughtBadBehaving;
+		//write "Total caught visitors with bad behaviour: " + totalCaughtBadBehaving;
 		self.visitorDie <- false;
 		badBehaviour <- false;
 		do die;
 	}
- 
- 
-	reflex random_move when: foodStorage > 0 and drinksStorage > 0 and !(self.badBehaviourCaught) and !(self.witnessedBadBehaviour) {
+	
+	reflex random_move when: foodStorage > 0 and drinksStorage > 0 
+			and !(self.badBehaviourCaught) and !(self.witnessedBadBehaviour) {
 		do wander;
 	}
- 
- 
-	reflex visitKnownStall when: targetStall = nil and self.locationMemory != [] and flip(exploitingMemoryRate) and (foodStorage = 0 or drinksStorage = 0) and !(self.witnessedBadBehaviour) and allowMemory{
-		self.exploitingMemoryRate <- max(self.exploitingMemoryRate - exploitingMemoryVariation, 0); //modify the rely on the memory for the next choices
-		self.targetStall <- self.locationMemory[rnd(length(self.locationMemory) - 1)]; // pick one random location memory as new destination
-		//write self.exploitingMemoryRate;
-	}
- 
-	reflex interactWithVisitor when: targetStall = InformationCentre closest_to(self) and flip(interactionRate) and (foodStorage = 0 or drinksStorage = 0) and !(self.witnessedBadBehaviour) and allowInteraction{
-		if (Visitor at_distance(communicationDistance) != []){ //interaction between Visitors to exchange missing information about stalls locations
+	
+	reflex moveToTarget when: targetStall != nil or targetGuard != nil or caughtVisitor != nil {
+		
+		if(targetStall != nil) {
+			do goto target: targetStall;			
+		}
 
-			ask (Visitor closest_to(self)) {
-				myself.color <- rgb(252, 186, 3); //the Visitor becomes yellow when interacts with another Visitor
-				if (self.locationMemory - myself.locationMemory != []) { //Difference of memory to understand if there's any potential new location learnable
-					add (self.locationMemory - myself.locationMemory)[length(self.locationMemory - myself.locationMemory) - 1] to: myself.locationMemory;
-					//write myself.name + " got the location of " + string(myself.locationMemory[length(myself.locationMemory) - 1]) + " from " + self.name;
-					myself.targetStall <- myself.locationMemory[length(myself.locationMemory) - 1]; //improves the memory parameter for next choices
-					//write myself.locationMemory;
-					//myself.size <- myself.size + 1;
-					myself.color <- rgb(252, 107, 3); //the Visitor becomes orange if it receives a new location
-					//draw string(length(Visitor at_distance(communicationDistance))) color: #black;
-					//draw polyline([self.location, myself.location]) color: rgb(252, 107, 3);
-					self.exploitingMemoryRate <- min(self.exploitingMemoryRate + exploitingMemoryVariation, 1);
-					successfulInteractions <- successfulInteractions + 1;
-					//write "Successful interactions: " + successfulInteractions;
-					//write self.exploitingMemoryRate;
-				}
-			}
+		if(targetGuard != nil and witnessedBadBehaviour) {
+			do goto target: targetGuard;
+		}
+		
+		if(caughtVisitor != nil and goingToBadBehaviourVisitorToReport = true) {
+			do goto target: caughtVisitor;
+			targetGuard <- nil;
 		}
 	}
+	
+	reflex setTargetPointToKnownStall when: (foodStorage = 0 or drinksStorage = 0) 
+			and targetStall = nil and !(self.witnessedBadBehaviour) 
+			and allowMemory and self.locationMemory != [] and flip(exploitingMemoryRate) {
+		
+		self.exploitingMemoryRate <- max(self.exploitingMemoryRate - exploitingMemoryVariation, 0);
+		self.targetStall <- self.locationMemory[rnd(length(self.locationMemory) - 1)]; // pick one random location memory as new destination
+	}
  
-	reflex setTargetPointToInfoCentre when: (foodStorage = 0 or drinksStorage = 0) and targetStall = nil and !(self.witnessedBadBehaviour){
+	reflex setTargetPointToInfoCentre when: (foodStorage = 0 or drinksStorage = 0) 
+			and targetStall = nil and !(self.witnessedBadBehaviour) {
+				
 		if(visitClosestStall) {
 			targetStall <- InformationCentre closest_to(self);
 			return;
 		}
 		targetStall <- one_of(InformationCentre);
 	}
-
-
- 
-	reflex interactWithStall when: targetStall != nil and location distance_to(targetStall.location) < 2 and !(self.witnessedBadBehaviour){
-		//Interaction with the different stalls (for food/drink)
+	
+	reflex interactWithTargetStall when: targetStall != nil and location distance_to(targetStall.location) < 2 
+			and !(self.witnessedBadBehaviour) {
  
 		ask targetStall {
  
@@ -420,15 +381,44 @@ species Visitor skills: [moving] {
 		}
 	}
  
+	reflex interactWithOtherVisitor when: targetStall != nil and targetStall.providesInformation 
+			and allowInteraction and flip(interactionRate) and !(self.witnessedBadBehaviour) {
+		
+		// interaction between Visitors to exchange missing information about stalls locations
+		if (Visitor at_distance(communicationDistance) != []){
+
+			ask (Visitor closest_to(self)) {
+				
+				myself.color <- rgb(252, 186, 3);	// Visitor becomes yellow when interact with another Visitor
+				
+				if (self.locationMemory - myself.locationMemory != []) {
+					// Difference in between two memories can be learnt
+					
+					add (self.locationMemory - myself.locationMemory)[length(self.locationMemory - myself.locationMemory) - 1] 
+							to: myself.locationMemory;
+					//write myself.name + " learnt location of " + string(myself.locationMemory[length(myself.locationMemory) - 1]) + " from " + self.name;
+					
+					myself.targetStall <- myself.locationMemory[length(myself.locationMemory) - 1];	// improves memory parameter for next choices
+
+					myself.color <- rgb(252, 107, 3);	// Visitor becomes orange if it receives new location
+					//draw polyline([self.location, myself.location]) color: rgb(252, 107, 3);
+					
+					self.exploitingMemoryRate <- min(self.exploitingMemoryRate + exploitingMemoryVariation, 1);
+					successfulInteractions <- successfulInteractions + 1;
+					//write "Successful interactions: " + successfulInteractions;
+				}
+			}
+		}
+	}
+ 
 	aspect default {
 		draw circle(size) color: color;
-		draw string(name) color:#black;
+		
+		if(displayEntityName) {
+			draw string(name) color: #black;	
+		}
 	}
 }
-
-
-
-
  
 grid FestivalCell width: gridWidth height: gridHeight neighbors: 4 {}
  
@@ -445,7 +435,11 @@ experiment Festival type: gui {
 	parameter "Maximum food storage per visitor: " var: foodMax min: 1.0 max: 50.0 category: "Consumption";
 	parameter "Maximum drinks storage per visitor: " var: drinksMax min: 1.0 max: 50.0 category: "Consumption"; 
  
+	parameter "Display entity names" var: displayEntityName category: "Display Options";
 	parameter "Visit closes stall (random stall if false)" var: visitClosestStall category: "Display Options";
+	
+	parameter "Allow location memory of visitors" var: allowMemory category: "Advanced Options";
+	parameter "Allow interaction between visitors" var: allowInteraction category: "Advanced Options";
  
 	output {
 		display main_display {

@@ -49,3 +49,7 @@ When any visitor performs an interaction with a stall, it can become a criminal 
 Each visitor spies on al the other visitors within `guardRange` to check if any visitor has the active flag `badBehaviour`. In case a visitor realises such bad behaviour, the observing visitor approaches an information centre, reports his observation and finds a guard. The guard stores the witness and follows him/her. Once the guard is close enough to the criminal, he/she will delete the criminal (bad behaving visitor) from the simulation.
 
 To activate the option of a guard who tries to remove bad behaving visitors, set the parameter for the number of guards greater than zero.
+
+The following image shows the experiment `Festival` with a 63x63 grid, three information centres, 20 stalls which provide food or drinks, two guard and 202 visitors (one was already removed by a guard). Visitors are not bound to only visit the closest stall, visitors have a memory to store locations of visited stalls and they share locations of visited stalls.
+
+![festival](https://user-images.githubusercontent.com/41639203/98767030-4e84ae80-241a-11eb-8a6a-6652c055b0ac.png)

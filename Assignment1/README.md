@@ -44,19 +44,8 @@ If another visitor (a peer) is within `communicationDistance`, visitors can exch
 
 With a probability of `criminalRate`, each visitor can behave badly. Idea is to realise a bad beaviour and scole this bad behaviour.
 
-When any visitor performs an interaction with a stall, it can become a criminal which then gets stored in its variable `badBehaviour`.
+When any visitor performs an interaction with a stall, it can become a criminal which then activates its variable `badBehaviour`.
 
-Each visitor spies on al the other visitors within `guardRange` to check if any visitor has the active flas `badBehaviour`. In case a visitor realises such bad behaviour, the observing visitor approaches an information centre, reports his observation and finds a guard. The guard receives the information about the location of the criminal and approaches him/her. Once the guard arrives, he/she will delete the suspect visitor from the simulation.
+Each visitor spies on al the other visitors within `guardRange` to check if any visitor has the active flag `badBehaviour`. In case a visitor realises such bad behaviour, the observing visitor approaches an information centre, reports his observation and finds a guard. The guard stores the witness and follows him/her. Once the guard is close enough to the criminal, he/she will delete the criminal (bad behaving visitor) from the simulation.
 
 To activate the option of a guard who tries to remove bad behaving visitors, set the parameter for the number of guards greater than zero.
-
-Due to some particular conditions of the Stalls disposition on the map, it may happens that the crime-reporting Visitors will constantly follow the Guard. This is one of the "safe" fix to prevent this problem:
-
-	reflex stopHelpingGuard when: badBehaviourVisitorsOnSight != [] and dead(caughtVisitor) { //Stop following the guard once the arrest is done
-		caughtVisitor <- nil;
-		targetGuard <- nil;
-		targetStall <- one_of(InformationCentre); //Restart from one Information Centre
-		witnessedBadBehaviour <- false;
-		goingToBadBehaviourVisitorToReport <- false; //true if the Visitor is following the Guard to show the criminal's position
-		badBehaviourVisitorsOnSight <- [];
-	}

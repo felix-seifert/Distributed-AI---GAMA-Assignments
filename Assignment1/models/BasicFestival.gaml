@@ -8,6 +8,18 @@
 model BasicFestival
  
 global {
+	
+	
+	
+	point auctionLocation <- {3, 4};
+	point shopExample <- {3, 7};
+	string informStartAuctionMSG <- 'inform-start-of-auction';
+	string informEndAuctionFailedMSG <- 'auction-failed';
+	string wonActionMSG <- 'won-auction';
+	string lostActionMSG <- 'lost-auction';
+	string acceptProposal <-'accepted-proposal';
+	string refusedProposal <-'rejected-proposal';
+	int nbOfParticipants <- 0;
  
 	int gridWidth <- 10;
 	int gridHeight <- 10;
@@ -37,8 +49,10 @@ global {
  
 	int nbInformationCentres <- 1;
 	int nbStores <- 4;
-	int nbVisitors <- 10;
+	int nbVisitors <- 0;
 	int nbGuards <- 0;		// Functionality of bad behaviour gets activated when at least one guard exists.
+	int nbParticipants <- 10;
+	int nbInitiators <- 2;
  
 	bool visitClosestStall <- true;
  
@@ -51,6 +65,8 @@ global {
 		create DrinksStore number: nbDrinksStores;
 		create Visitor number: nbVisitors;
 		create Guard number: nbGuards;
+		create Participant number: nbParticipants;
+		create Initiator number: nbInitiators;
  
 		loop centre over: list(InformationCentre) {
 			centre.foodStores <- list(FoodStore);
@@ -138,14 +154,13 @@ species Guard skills: [moving] {
 
 
 
-///////////////////////////7
-
+/////////////////////////////////////////////////
 
 
 
 
 species Participant skills: [moving, fipa] {
-	rgb Color <- #green;
+	rgb color <- #green;
 
 	point targetLocation <- nil;
 	bool onAction <- false;
@@ -161,7 +176,7 @@ species Participant skills: [moving, fipa] {
 
 	reflex moveToTarget when: targetLocation != nil {
 		
-		do goto target:targetLocation;
+		do goto target: targetLocation;
 		
 	}
 	
@@ -175,7 +190,7 @@ species Participant skills: [moving, fipa] {
 	reflex auctionStart when: !empty(informs) and auctionStep = 0 {
 		
 		onAction <- true;
-		targetLocation <- ShopOne;
+		targetLocation <- shopExample;
 		loop message over: informs {
 			
 			if (message.contents = informStartAuctionMSG){
@@ -191,12 +206,12 @@ species Participant skills: [moving, fipa] {
 
 		message proposalFromInitiator <- cfps[0];
 
-		int proposedPrice <-  int(proposalFromInitiator.contents);
+		int proposedPrice <- int(proposalFromInitiator.contents);
 		write 'CFP by ' + agent(proposalFromInitiator.sender) + '; price: ' + proposedPrice;
 		
 		if(proposedPrice > maximumPrice) {
 			
-			write name + ':' + 'price too high for me';
+			write name + ': ' + 'price too high for me';
 			do refuse message: proposalFromInitiator contents: [refusedProposal];	
 			
 		}
@@ -211,7 +226,136 @@ species Participant skills: [moving, fipa] {
 	
 	
 	aspect default{
-		draw squircle(2.0, 2.0) at: location color: Color;
+		draw squircle(2.0, 2.0) at: location color: color;
+	}
+}
+
+
+
+
+species Initiator skills: [fipa] {
+	
+	int startingPrice <- 100;
+	int currentPrice <- startingPrice;
+	int priceStep <- 1;
+	int minimumPrice <- 50;
+	int auctionStep <- 0;
+	int participantsBidding <- 0;
+	float canStartAuction <- 0.05;
+	rgb color <- #purple;
+	
+	bool auctionStarted <- false;
+
+	reflex startAuction when: (auctionStarted = false) {
+		
+		auctionStarted <- flip(canStartAuction);
+		
+		if auctionStarted{
+			
+			write "Auction open!";
+			
+			do start_conversation to: list(Participant) protocol: 'fipa-contract-net' performative: 'inform' contents: [ (informStartAuctionMSG)];
+			auctionStep <- 1;
+			
+		}
+	}
+	
+	
+	reflex sendCFPToParticipants when: (auctionStep = 1) and (length(Participant at_distance 3) = nbOfParticipants) {
+		
+		write name + ' sends CFP to everyone: ' + currentPrice;
+		do start_conversation to: list(Participant) protocol: 'fipa-contract-net' performative: 'cfp' contents: [currentPrice];
+		participantsBidding <- length(Participant);
+		auctionStep <- 2;
+		
+	}
+
+
+	reflex manageRefuseMessage when: auctionStep = 2 and empty(accept_proposals) and !empty(refuses) and (participantsBidding = (length(refuses))) {
+		write name + ' received a refuse';
+		write 'Still competing: ' + participantsBidding;
+		
+		if ((currentPrice - priceStep) >= minimumPrice) {
+			currentPrice <- currentPrice - priceStep;
+			write name + "Lowered the price to: "+ currentPrice;
+			
+			//TODO
+			loop eachRefuse over: refuses { 
+				message refuseByParticipant <- refuses[0];
+		 	do cfp message: refuseByParticipant contents: [currentPrice];
+
+			}
+		}
+		
+		else {
+			write name + " minimum price reached!";
+			
+			loop refuseMessage over: refuses { 
+				
+				message refuseByParticipant <- refuseMessage;
+		 	
+				do end_conversation message: refuseByParticipant contents: [(informEndAuctionFailedMSG)];
+				
+			}
+		}
+		
+		
+	}
+	
+	reflex acceptProposalMessages when: !empty(accept_proposals) and auctionStep = 2 and (empty(refuses) and ((length(accept_proposals) = participantsBidding)) or (participantsBidding = (length(accept_proposals)+length(refuses)))) {
+		
+		auctionStep <- 3;
+		
+		message firstAccept <- accept_proposals[0];
+		
+		write agent(firstAccept.sender).name + 'won the bid of ' + name;
+		do end_conversation message: firstAccept contents: [(wonActionMSG)];
+		
+		//send losing message to the others
+		
+		loop while: !empty(accept_proposals) {
+			
+			message otheAccepts <- accept_proposals[0];
+	 	do end_conversation message: otheAccepts contents: [lostActionMSG];
+	 	
+		}
+
+		loop while: !empty(refuses) {
+			message refusesMSG <- refuses[0];
+	 	do end_conversation message: refusesMSG contents: [lostActionMSG];
+		}
+		
+		currentPrice <- startingPrice;
+		auctionStarted <- false;
+		
+		ask Participant {
+			
+			targetLocation <- auctionLocation + {rnd(-communicationDistance, communicationDistance), rnd(-communicationDistance, communicationDistance)};
+			onAction <- false;
+			
+		}
+
+	}
+	
+	reflex auctionClosed when: auctionStep = 3 and (!empty(accept_proposals) or !empty(refuses)) {
+		
+		loop while: !empty(accept_proposals) {
+			
+			message otheAccepts <- accept_proposals[0];
+	 		do end_conversation message: otheAccepts contents: [lostActionMSG];
+	 	
+		}
+		
+		loop while: !empty(refuses) { 
+			
+			message refusesMSG <- refuses[0];
+	 		do end_conversation message: refusesMSG contents: [lostActionMSG];
+	 	
+		}
+	}
+	
+	aspect default {
+		draw squircle(2.0, 2.0) at: location color: color;
 	}
 }
 
@@ -219,16 +363,13 @@ species Participant skills: [moving, fipa] {
 
 
 
+/////////////////////////////////////////////////
 
 
 
 
 
-/////////////////////////
-
-
-
-species Visitor skills: [moving] {
+species Visitor skills: [moving, fipa] {
 	
 	float foodStorage <- rnd(foodMin, foodMax, foodReduction) 
 			min: foodMin max: foodMax 
@@ -255,6 +396,8 @@ species Visitor skills: [moving] {
 	float badBehaviourRate <- rnd(-criminalRate/4, criminalRate);
 	
 	bool visitorDie <- false;
+	
+	
 	
 	/*
 	 * Search for badly behaving visitors in surroundings
@@ -454,8 +597,11 @@ experiment Festival type: gui {
  
 	parameter "Initial number of information centres: " var: nbInformationCentres min: 1 max: 5 category: "Initial Numbers";
 	parameter "Initial number of stores: " var: nbStores min: 4 max: 50 category: "Initial Numbers";
-	parameter "Initial number of visitors: " var: nbVisitors min: 10 max: 500 category: "Initial Numbers";
- 
+	parameter "Initial number of visitors: " var: nbVisitors min: 0 max: 500 category: "Initial Numbers";
+	parameter "Initial number of Participant: " var: nbParticipants min: 10 max: 500 category: "Initial Numbers";
+	parameter "Initial number of Initiators: " var: nbInitiators min: 10 max: 500 category: "Initial Numbers";
+	
+	
 	parameter "Maximum food storage per visitor: " var: foodMax min: 1.0 max: 50.0 category: "Consumption";
 	parameter "Maximum drinks storage per visitor: " var: drinksMax min: 1.0 max: 50.0 category: "Consumption"; 
  

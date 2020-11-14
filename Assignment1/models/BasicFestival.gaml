@@ -180,7 +180,7 @@ species Participant skills: [moving, fipa] {
 		
 	}
 	
-	reflex onAuctionArrival when: location distance_to(auctionLocation) < 5.5 and onAction = false {
+	reflex onAuctionArrival when: location distance_to(auctionLocation) < communicationDistance and onAction = false {
 		
 		targetLocation <- nil;
 		

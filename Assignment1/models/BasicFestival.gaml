@@ -136,6 +136,98 @@ species Guard skills: [moving] {
 	}
 }
 
+
+
+///////////////////////////7
+
+
+
+
+
+species Participant skills: [moving, fipa] {
+	rgb Color <- #green;
+
+	point targetLocation <- nil;
+	bool onAction <- false;
+
+	int auctionStep <- 0;
+	int maximumPrice <- rnd(70, 85);
+	
+	reflex random_move when: targetLocation = nil{
+		
+		do wander;
+		
+	}
+
+	reflex moveToTarget when: targetLocation != nil {
+		
+		do goto target:targetLocation;
+		
+	}
+	
+	reflex onAuctionArrival when: location distance_to(auctionLocation) < 5.5 and onAction = false {
+		
+		targetLocation <- nil;
+		
+	}
+	
+	// not sure about this
+	reflex auctionStart when: !empty(informs) and auctionStep = 0 {
+		
+		onAction <- true;
+		targetLocation <- ShopOne;
+		loop message over: informs {
+			
+			if (message.contents = informStartAuctionMSG){
+				
+				write name + ' Auction started, ' + string(message.contents);
+				auctionStep <- 1;
+				
+			}
+		}
+	}
+	
+	reflex getInitiatorCFP when: !empty(cfps) {
+
+		message proposalFromInitiator <- cfps[0];
+
+		int proposedPrice <-  int(proposalFromInitiator.contents);
+		write 'CFP by ' + agent(proposalFromInitiator.sender) + '; price: ' + proposedPrice;
+		
+		if(proposedPrice > maximumPrice) {
+			
+			write name + ':' + 'price too high for me';
+			do refuse message: proposalFromInitiator contents: [refusedProposal];	
+			
+		}
+		
+		else{
+			
+			write name + ': price is reasonable';
+			do accept_proposal message: proposalFromInitiator contents: [acceptProposal];
+				
+		}
+	}
+	
+	
+	aspect default{
+		draw squircle(2.0, 2.0) at: location color: Color;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/////////////////////////
+
+
+
 species Visitor skills: [moving] {
 	
 	float foodStorage <- rnd(foodMin, foodMax, foodReduction) 

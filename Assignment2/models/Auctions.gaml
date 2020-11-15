@@ -73,7 +73,9 @@ species Auctioneer skills: [fipa] {
 		
 		auctionId <- nextAuctionId;
 		nextAuctionId <- nextAuctionId + 1;
-		
+	}
+	
+	reflex anounceAuction when: auctionStarted and empty(subscribedBidders) {
 		do start_conversation to: list(Bidder) protocol: 'fipa-contract-net' 
 				performative: 'inform' contents: [auctionStartedMsg, auctionId, auctionGenre];
 	}
@@ -105,14 +107,14 @@ species Auctioneer skills: [fipa] {
 		loop s over: subscribes {
 			list<unknown> contents <- s.contents;
 			
-			if(contents[0] = subscribeMsg and contents[1] = auctionId) {
+			if(contents[0] = subscribeMsg and contents[1] = auctionId and !(subscribedBidders contains s.sender)) {
 				add Bidder(s.sender) to: subscribedBidders;
-				write Bidder(s.sender).name + ' subscribed to the auction of ' + self.name;
+				//write Bidder(s.sender).name + ' subscribed to the auction of ' + self.name;
 				break;
 			}
-			if(contents[0] = unsubscribeMsg) {
+			if(contents[0] = unsubscribeMsg and subscribedBidders contains s.sender) {
 				remove Bidder(s.sender) from: subscribedBidders;
-				write Bidder(s.sender).name + ' unsubscribed from the auction of ' + self.name;
+				//write Bidder(s.sender).name + ' unsubscribed from the auction of ' + self.name;
 			}
 		}
 	}
@@ -192,7 +194,7 @@ species Bidder skills: [moving, fipa] {
 		do goto target: targetLocation;
 	}
 	
-	reflex subscribeToAndUnsubscribeFromAuction when: !empty(informs) {
+	reflex subscribeToNewAuction when: targetLocation = nil and !empty(informs) {
 		
 		loop msg over: informs {
 			list<unknown> contents <- msg.contents;
@@ -200,12 +202,18 @@ species Bidder skills: [moving, fipa] {
 			if(contents[0] = auctionStartedMsg and contents[2] = auctionGenreInterested) {
 				targetLocation <- agent(msg.sender).location;
 				do subscribe message: msg contents: [subscribeMsg, contents[1]];
-				break;
 			}
+		}
+	}
+	
+	reflex unsubscribeFromAuction when: targetLocation != nil and !empty(informs) {
+		
+		loop msg over: informs {
+			list<unknown> contents <- msg.contents;
+			
 			if(contents[0] = auctionEndedMsg) {
 				do subscribe message: msg contents: [unsubscribeMsg];
 				targetLocation <- nil;
-				break;
 			}
 		}
 	}

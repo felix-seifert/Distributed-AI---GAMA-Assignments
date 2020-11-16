@@ -29,4 +29,4 @@ As last step, the winner Bidder will accept the price agree (`handleAcceptedProp
 
 The winner Bidder will be highlighted in orange on the map.
 
-<center><img src="https://github.com/felix-seifert/Distributed-AI---GAMA-Assignments/blob/Assignment2/Assignment2/includes/data/SealedBid.png"></center>
+<img src="https://github.com/felix-seifert/Distributed-AI---GAMA-Assignments/blob/Assignment2/Assignment2/includes/data/SealedBid.png">

@@ -10,8 +10,6 @@ model DutchAuction
 
 global {
 	
-	string auctionType <- nil;	// Type of auctions gets set by starting different experiments
- 
 	int gridWidth <- 10;
 	int gridHeight <- 10;
 	bool displayEntityName <- false;

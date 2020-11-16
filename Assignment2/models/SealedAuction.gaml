@@ -53,24 +53,20 @@ global {
 species Auctioneer skills: [fipa] {
 	image_file icon <- image_file('../includes/data/auctioneer.png');
 	
-	int startingPriceDutch <- 100;
-	int minimumPriceDutch <- 50;
 	int priceStep <- 1;
 	
 	float probabilityToStartAuction <- 0.005;
 	
 	int auctionId <- -1;
 	bool auctionStarted <- false;
-	int currentPrice <- startingPriceDutch;
+	int currentPrice <- 101;
 	list<Bidder> currentRefusals <- [];
-	Bidder highestBidder <- nil;
 	bool highestBid <- false;
 	
 	string auctionGenre <- nil;
 	list<Bidder> subscribedBidders <- [];
 	list<Bidder> subscribedBiddersWhoAreClose <- [];
 	
-	list<Bidder> sealedBidPriceProposals <- [];
 	
 	reflex startSealedBidAuction when: auctionType = sealedBidAuction and !auctionStarted and empty(subscribedBidders) and flip(probabilityToStartAuction){
 		auctionStarted <- true;
@@ -100,7 +96,6 @@ species Auctioneer skills: [fipa] {
 				remove msg.sender from: subscribedBiddersWhoAreClose;
 				remove msg.sender from: subscribedBidders;
 				highestBid <- false;
-				break;
 			}
 		}
 		
@@ -176,7 +171,7 @@ species Auctioneer skills: [fipa] {
 	}
 	
 	
-	reflex informBiddersAboutPriceSealedBidAuction when: auctionStarted and auctionType = sealedBidAuction and !empty(subscribedBiddersWhoAreClose) and length(subscribedBidders) = length(subscribedBiddersWhoAreClose) and highestBid = false {
+	reflex informBiddersAboutPriceSealedBidAuction when: auctionStarted and auctionType = sealedBidAuction and !empty(subscribedBiddersWhoAreClose) and (subscribedBidders - subscribedBiddersWhoAreClose = []) and highestBid = false {
 		
 		write self.name + ' informs bidders to make a sealed bid';
 		do start_conversation to: subscribedBiddersWhoAreClose protocol: 'fipa-contract-net' 
@@ -216,6 +211,11 @@ species Bidder skills: [moving, fipa] {
 			and location distance_to(target.location) > 2 {
 		do goto target: target.location;
 		agentMoved <- true;
+	}
+	
+	reflex beIdle when: onAuction = false {
+		do wander;
+		target <- nil;
 	}
 
 	
@@ -282,7 +282,7 @@ species Bidder skills: [moving, fipa] {
 				
 		target <- nil;
 		onAuction <- false;
-	}	
+	}
 
 	
 	aspect default {

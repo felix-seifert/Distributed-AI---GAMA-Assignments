@@ -85,10 +85,7 @@ species Auctioneer skills: [fipa] {
 			
 	}
 	
-	
 
-	
-	
 	reflex anounceAuction when: auctionStarted and empty(subscribedBidders) {
 		do start_conversation to: list(Bidder) protocol: 'fipa-contract-net' 
 				performative: 'inform' contents: [auctionStartedMsg, auctionId, auctionGenre];
@@ -119,7 +116,7 @@ species Auctioneer skills: [fipa] {
 		
 		auctionStarted <- false;
 		write 'The auction of ' + name + ' ended';
-		write 'aaaa' + subscribes;
+		write subscribes;
 	}
 	
 	
@@ -143,19 +140,6 @@ species Auctioneer skills: [fipa] {
 			}
 			if(contents[0] = unsubscribeMsg and subscribedBiddersWhoAreClose contains s.sender) {
 				remove Bidder(s.sender) from: subscribedBiddersWhoAreClose;
-			}
-		}
-	}
-	
-	reflex handleRefusalsSealedBidAuction when: auctionStarted and auctionType = sealedBidAuction and !empty(subscribedBiddersWhoAreClose) and empty(proposes) and !empty(refuses) {
-		
-		loop refusal over: refuses {
-			list<unknown> contents <- refusal.contents;
-			
-			if(contents[0] = priceTooHighMsg and contents[1] = currentPrice 
-					and !(currentRefusals contains Bidder(refusal.sender))) {
-				
-				add Bidder(refusal.sender) to: currentRefusals;
 			}
 		}
 	}
@@ -192,8 +176,7 @@ species Auctioneer skills: [fipa] {
 	}
 	
 	
-	reflex informBiddersAboutPriceSealedBidAuction when: auctionStarted and auctionType = sealedBidAuction and !empty(subscribedBiddersWhoAreClose) and length(currentRefusals) < length(subscribedBiddersWhoAreClose) 
-			and length(subscribedBidders) = length(subscribedBiddersWhoAreClose) and highestBid = false {
+	reflex informBiddersAboutPriceSealedBidAuction when: auctionStarted and auctionType = sealedBidAuction and !empty(subscribedBiddersWhoAreClose) and length(subscribedBidders) = length(subscribedBiddersWhoAreClose) and highestBid = false {
 		
 		write self.name + ' informs bidders to make a sealed bid';
 		do start_conversation to: subscribedBiddersWhoAreClose protocol: 'fipa-contract-net' 
@@ -222,6 +205,8 @@ species Bidder skills: [moving, fipa] {
 	string auctionGenreInterested <- any(auctionGenres);
 	int maximumPrice <- rnd(65, 90);
 	
+	bool onAuction <- false;
+	
 	reflex randomMove when: target = nil{
 		do wander;
 		agentMoved <- true;
@@ -234,7 +219,7 @@ species Bidder skills: [moving, fipa] {
 	}
 
 	
-	reflex subscribeToNewAuction when: target = nil and !empty(informs) {
+	reflex subscribeToNewAuction when: target = nil and !empty(informs) and !onAuction {
 		
 		loop msg over: informs {
 			list<unknown> contents <- msg.contents;
@@ -242,12 +227,14 @@ species Bidder skills: [moving, fipa] {
 			if(contents[0] = auctionStartedMsg and contents[2] = auctionGenreInterested) {
 				target <- Auctioneer(msg.sender);
 				do subscribe message: msg contents: [subscribeMsg, contents[1]];
+				onAuction <- true;
+				write name + ' subscribed to the auction!';
 			}
 		}
 	}
 	
 	reflex notifyAboutCloseDistance when: target != nil 
-			and location distance_to(target.location) < 3 and agentMoved {
+			and location distance_to(target.location) < 2 and agentMoved {
 		
 		agentMoved <- false;
 		
@@ -255,7 +242,6 @@ species Bidder skills: [moving, fipa] {
 		add target to: auctioneerList;
 		do start_conversation to: auctioneerList protocol: 'fipa-contract-net' 
 				performative: 'subscribe' contents: [subscribeAndCloseMsg];
-		write name + ' subscribed to the auction!';
 	}
 	
 	reflex unsubscribeFromAuction when: target != nil and !empty(informs) {
@@ -267,6 +253,7 @@ species Bidder skills: [moving, fipa] {
 				write name + ' successfully unsubscribed!';
 				do subscribe message: msg contents: [unsubscribeMsg];
 				target <- nil;
+				onAuction <- false;
 			}
 		}
 	}
@@ -294,6 +281,7 @@ species Bidder skills: [moving, fipa] {
 		}
 				
 		target <- nil;
+		onAuction <- false;
 	}	
 
 	

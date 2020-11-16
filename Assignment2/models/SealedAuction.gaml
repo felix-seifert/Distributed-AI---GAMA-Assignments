@@ -119,7 +119,6 @@ species Auctioneer skills: [fipa] {
 		
 		auctionStarted <- false;
 		write 'The auction of ' + name + ' ended';
-		write 'aaaa' + subscribes;
 	}
 	
 	

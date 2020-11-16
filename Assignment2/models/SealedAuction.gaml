@@ -57,7 +57,7 @@ species Auctioneer skills: [fipa] {
 	int minimumPriceDutch <- 50;
 	int priceStep <- 1;
 	
-	float probabilityToStartAuction <- 0.05;
+	float probabilityToStartAuction <- 0.005;
 	
 	int auctionId <- -1;
 	bool auctionStarted <- false;
@@ -71,7 +71,6 @@ species Auctioneer skills: [fipa] {
 	list<Bidder> subscribedBiddersWhoAreClose <- [];
 	
 	list<Bidder> sealedBidPriceProposals <- [];
-	
 	
 	reflex startSealedBidAuction when: auctionType = sealedBidAuction and !auctionStarted and empty(subscribedBidders) and flip(probabilityToStartAuction){
 		auctionStarted <- true;
@@ -95,7 +94,8 @@ species Auctioneer skills: [fipa] {
 				performative: 'inform' contents: [auctionStartedMsg, auctionId, auctionGenre];
 	}
 	
-	reflex endSealedBidAuction when: auctionStarted and auctionType = sealedBidAuction and !empty(informs) and highestBid = true {
+	
+	reflex endSealedBidAuction when: auctionStarted and auctionType = sealedBidAuction and !empty(informs) and highestBid = true and (subscribedBidders - subscribedBiddersWhoAreClose = []) {
 		loop msg over: informs {
 			list<unknown> contents <- msg.contents;
 			if(contents[0] = agreeMsg and contents[1] = currentPrice) {
@@ -119,6 +119,7 @@ species Auctioneer skills: [fipa] {
 		
 		auctionStarted <- false;
 		write 'The auction of ' + name + ' ended';
+		write 'aaaa' + subscribes;
 	}
 	
 	
@@ -231,7 +232,7 @@ species Bidder skills: [moving, fipa] {
 		do goto target: target.location;
 		agentMoved <- true;
 	}
-	
+
 	
 	reflex subscribeToNewAuction when: target = nil and !empty(informs) {
 		
@@ -254,7 +255,7 @@ species Bidder skills: [moving, fipa] {
 		add target to: auctioneerList;
 		do start_conversation to: auctioneerList protocol: 'fipa-contract-net' 
 				performative: 'subscribe' contents: [subscribeAndCloseMsg];
-		write name + 'subscribed to the auction!';
+		write name + ' subscribed to the auction!';
 	}
 	
 	reflex unsubscribeFromAuction when: target != nil and !empty(informs) {
@@ -275,16 +276,9 @@ species Bidder skills: [moving, fipa] {
 		
 		loop msg over: cfps {
 			list<unknown> contents <- msg.contents;
-			int suggestedPrice <- int(contents[1]);
 			
-			if(contents[0] = priceInfoMsg) {
-				do propose message: msg contents: [priceGoodMsg, maximumPrice];
-				write self.name + ' proposes a price of ' + maximumPrice;
-				break;
-			}
-			
-			do refuse message: msg contents: [priceTooHighMsg, suggestedPrice];
-			//write self.name + ' refuses price of ' + suggestedPrice;
+			do propose message: msg contents: [priceGoodMsg, maximumPrice];
+			write self.name + ' proposes a price of ' + maximumPrice;
 		}
 	}
 

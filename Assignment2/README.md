@@ -26,3 +26,7 @@ Each of them will propose the maximum price that is willing to pay for the aucti
 
 The Bidder that offered the highest price will be assigned as winner of the auction (`endSealedBidAuction` reflex).
 As last step, the winner Bidder will accept the price agree (`handleAcceptedProposalSealedBidAuction` reflex) and each Bidder will be released from the ended auction.
+
+The winner Bidder will be highlighted in orange on the map.
+
+[!SealedBid]()

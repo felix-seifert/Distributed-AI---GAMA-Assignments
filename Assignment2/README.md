@@ -29,4 +29,4 @@ As last step, the winner Bidder will accept the price agree (`handleAcceptedProp
 
 The winner Bidder will be highlighted in orange on the map.
 
-[!SealedBid]()
+[!SealedBid](/includes/data/SealedBid.png)

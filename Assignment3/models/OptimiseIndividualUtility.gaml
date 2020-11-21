@@ -13,6 +13,13 @@ global {
 	int gridHeight <- 10;
 	bool displayEntityName <- false;
 	
+	list<image_file> icons <- [
+		image_file("../includes/data/singer.png"), 
+		image_file("../includes/data/band.png"), 
+		image_file("../includes/data/cello.png"), 
+		image_file("../includes/data/piano.png")
+	];
+	
 	int nbStages <- 4;
 	int nbGuests <- 10;
 	
@@ -38,13 +45,13 @@ global {
 
 species Stage skills: [fipa] {
 	
-	image_file icon <- image_file("../includes/data/piano.png");
+	image_file icon <- nil;
 	
 	float size <- 5.0;		// Defines vertical of stage. Horizontal width is 2 * size.
 	rgb color <- rgb(240, 100, 100);
 	
 	float sizeFloor <- size * 2;	// Defines vertical height of guest floor. Same horizontal width as stage.
-	rgb colorFloor <- rgb(100, 200, 90);
+	rgb colorFloor <- rgb(240, 170, 170);
 	
 	geometry stageArea <- rectangle(size * 2, size);
 	geometry floorArea <- rectangle(size * 2, sizeFloor);
@@ -68,7 +75,12 @@ species Stage skills: [fipa] {
 	reflex startAct when: !actStarted and durationPause > nbCyclesPauseBetweenActs {
 		durationAct <- 0;
 		actStarted <- true;
-		write 'Act at ' + name + 'started';
+		
+		color <- rgb(100, 200, 90);
+		colorFloor <- rgb(160, 210, 160);
+		icon <- one_of(icons);
+		
+//		write 'Act at ' + name + 'started';
 	}
 	
 	reflex endAct when: actStarted and durationAct > nbCyclesActDuration {
@@ -80,8 +92,12 @@ species Stage skills: [fipa] {
 		
 		do start_conversation to: list(Guest) performative: 'inform' 
 				contents: [actEndedMsg, self];
-				
-		write 'Act at ' + name + ' ended';
+			
+		color <- rgb(240, 100, 100);
+		colorFloor <- rgb(240, 170, 170);
+		icon <- nil;
+		
+//		write 'Act at ' + name + ' ended';
 	}
 	
 	reflex answerRequests when: !empty(requests) {
@@ -105,6 +121,8 @@ species Stage skills: [fipa] {
 		draw stageArea color: color;
 		draw floorArea color: colorFloor 
 				at: (self.location + {0, size/2 + sizeFloor/2});
+		
+		draw icon size: 4.5;
 		
 		if(displayEntityName) {
 			draw name color: #black;

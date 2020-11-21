@@ -12,7 +12,6 @@ model nQueen
 global {
 	
 	int boardSize <- 10;
-	//bool activateDebugTexts <- false;
 	float size <- 4.0;
 	
 	init {
@@ -22,13 +21,11 @@ global {
 		loop currentColumn from: 0 to: (boardSize - 1) {
 			create Queen returns: currentQueen {
 				precedentQueen <- currentPrecedentQueen;
-				//write string(precedentQueen) + " in loop";
 				column <- currentColumn;
 				location <- {-5, -5};
 			}
 			
 			currentPrecedentQueen <- currentQueen[0];
-			//write string(column_queen[0]) + " out loop";
 		}
 	}
 }
@@ -53,7 +50,6 @@ species Queen skills:[moving] {
 	}
 	
 	
-	//check if new cell does not overlap with previous ones
 	bool checkRowColumnDiagonalsCollision(chessBoard newPosition) {
 
 		if (precedentQueen = nil) {
@@ -65,7 +61,6 @@ species Queen skills:[moving] {
 	}
 	
 	
-	//remove when: targetPoint = nil to remove waiting time
 	reflex validPositioning when: (precedentQueen = nil or precedentQueen.onPosition = true) and !onPosition and targetCell = nil {
 		
 		if (row < boardSize - 1) {
@@ -100,7 +95,6 @@ grid chessBoard width: boardSize height: boardSize {
 experiment nQueen type: gui {
  
 	parameter "Board size and Queens number: " var: boardSize min: 4 max: 100 category: "Problem dimension";
-	//parameter "Display debug texts: " var: activateDebugTexts category: "Debug text";
  
 	output {
 		

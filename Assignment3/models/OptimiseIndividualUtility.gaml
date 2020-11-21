@@ -14,13 +14,18 @@ global {
 	bool displayEntityName <- false;
 	
 	int nbStages <- 4;
-	int nbGuests <- 4;
+	int nbGuests <- 10;
+	
+	int nbCyclesActDuration <- 100;
+	int nbCyclesPauseBetweenActs <- 30;
 	
 	string requestAttributesMsg <- 'request-attributes';
 	string provideAttributesMsg <- 'provide-attributes';
 	
 	string requestPlaceMsg <- 'request-place';
 	string providePlaceMsg <- 'provide-place';
+	
+	string actEndedMsg <- 'act-ended';
 	
 	list<string> importantAttributes <- ['band', 'show', 'sound-engineer', 
 			'sound-quality', 'light-engineer', 'lightshow'];
@@ -33,6 +38,8 @@ global {
 
 species Stage skills: [fipa] {
 	
+	image_file icon <- image_file("../includes/data/piano.png");
+	
 	float size <- 5.0;		// Defines vertical of stage. Horizontal width is 2 * size.
 	rgb color <- rgb(240, 100, 100);
 	
@@ -42,12 +49,39 @@ species Stage skills: [fipa] {
 	geometry stageArea <- rectangle(size * 2, size);
 	geometry floorArea <- rectangle(size * 2, sizeFloor);
 	
+	int durationAct <- 0 update: durationAct + 1;
+	int durationPause <- 0 update: durationPause + 1;
+	bool actStarted <- false;
+	
 	map<string, float> actAttributes;
 	
 	init {
+		do generateActAttributes;
+	}
+	
+	action generateActAttributes {
 		loop attr over: importantAttributes {
 			add attr::rnd(0.0, 1.0) to: actAttributes;
 		}
+	}
+	
+	reflex startAct when: !actStarted and durationPause > nbCyclesPauseBetweenActs {
+		durationAct <- 0;
+		actStarted <- true;
+		write 'Act at ' + name + 'started';
+	}
+	
+	reflex endAct when: actStarted and durationAct > nbCyclesActDuration {
+		durationPause <- 0;
+		actStarted <- false;
+		
+		actAttributes <- [];
+		do generateActAttributes;
+		
+		do start_conversation to: list(Guest) performative: 'inform' 
+				contents: [actEndedMsg, self];
+				
+		write 'Act at ' + name + ' ended';
 	}
 	
 	reflex answerRequests when: !empty(requests) {
@@ -61,7 +95,8 @@ species Stage skills: [fipa] {
 			else if(c[0] = requestPlaceMsg) {
 				point placeForVisitor <- any_location_in(floorArea);
 				do inform message: r contents: [providePlaceMsg, placeForVisitor];
-				//write name + ' informs ' + agent(r.sender).name + ' about place ' + placeForVisitor;
+//				write name + ' informs ' + agent(r.sender).name + ' about place ' 
+//						+ placeForVisitor;
 			}
 		}
 	}
@@ -113,6 +148,9 @@ species Guest skills: [moving, fipa] {
 		loop i over: informs {
 			list<unknown> c <- i.contents;
 			
+//			write name + ' has utility of ' + calculateUtility(map<string, float>(c[1])) 
+//					+ ' for ' + agent(i.sender).name;
+			
 			if(c[0] = provideAttributesMsg 
 					and calculateUtility(map<string, float>(c[1])) > currentUtility) {
 				
@@ -132,7 +170,7 @@ species Guest skills: [moving, fipa] {
 		float result <- 0.0;
 		
 		loop attr over: weightOfAttributes.keys {
-			result <- weightOfAttributes[attr] * actsAttributes[attr];
+			result <- result + (weightOfAttributes[attr] * actsAttributes[attr]);
 		}
 		
 		return result;
@@ -146,7 +184,24 @@ species Guest skills: [moving, fipa] {
 			
 			if(c[0] = providePlaceMsg) {
 				targetLocation <- c[1];
-				write name + ' goes to ' + targetLocation;
+//				write name + ' goes to ' + targetLocation;
+			}
+		}
+	}
+	
+	reflex realiseActEnded when: targetStage != nil and targetLocation != nil 
+			and !empty(informs) {
+		
+		loop i over: informs {
+			list<unknown> c <- i.contents;
+			
+//			write name + ' realised that act ' + c[1] + ' ended';
+//			write name + '\'s targetStage is ' + targetStage;
+			
+			if(c[0] = actEndedMsg and c[1] = targetStage) {
+				targetStage <- nil;
+				targetLocation <- nil;
+				currentUtility <- 0.0;
 			}
 		}
 	}
@@ -171,8 +226,13 @@ experiment OptimiseIndividualUtility type: gui {
 	
 	parameter "Initial number of stages: " var: nbStages min: 4 max: 8 
 			category: "Initial Numbers";
-	parameter "Initial number of guests: " var: nbGuests min: 4 max: 100 
+	parameter "Initial number of guests: " var: nbGuests min: 10 max: 100 
 			category: "Initial Numbers";
+	
+	parameter "Number of cycles for act duration" var: nbCyclesActDuration 
+			min: 50 max: 500 category: "Durations";
+	parameter "Number of cycles for pause between acts" var: nbCyclesPauseBetweenActs 
+			min: 20 max: 100 category: "Durations";
 	
 	parameter "Display entity names" var: displayEntityName category: "Options";
 	

@@ -70,8 +70,12 @@ n<sub>a</sub> + n<sub>b</sub> + n<sub>c</sub> + ... = n (the sum of all the agen
 
 ...
 
-**Objective function:**
+**Objective Function:**
 
 max( Σ<sub>i</sub>  [(a<sub>i</sub>*n<sub>a</sub> + b<sub>i</sub>*n<sub>b</sub> + c<sub>i</sub>*n<sub>c</sub> + ...) * m<sub>i</sub>])
 
-The Objective function is non-linear as each variable a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... is multiplied by the corresponding n<sub>a</sub>, n<sub>b</sub>, n<sub>c</sub>, ... .
+The Objective function is non-linear as each variable a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... is multiplied by the corresponding variable n<sub>a</sub>, n<sub>b</sub>, n<sub>c</sub>, ... .
+
+The non-linearity of the problem implies that the search for a global maximum of the Objective Function it's unoptimal due to the time constraint (even though an optimal solution can be found, it's not ideal since it would take too much time to be adopted).
+
+One solution is to perturbate the Global Utility value (that is equal to the Utility values of all the Agents) around the solution found by the base Utility problem. On the basis of that, after each Agent selects its own favourite Stage (the one that maximizes its Utility value), the Leader Agent will try to change some Agents' Stage selection in order to evaluate if the Global Utility value can increase.

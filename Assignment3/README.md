@@ -39,15 +39,41 @@ Final result of the N=20 case (~ 2'227'000 cycles, ~7 minute and 20 seconds):
 
 ## Task 2 - Decision-making Based on Individual Utility
 
-Report for task 2
+The model `OptimiseIndividualUtility` includes two different agent species: `Guest` and `Stage`.
 
-## Challenge Task
+Instances of the species `Stage` have an adjacent floor for guests who want to see the act. Each stage shows sequentially randomised acts. The duration of an act is defined as a number of cycles which have to pass. After each act, a break follows which also has a duration defined in cycles. The different duration parameters can be modified in the experiment interface.
 
-The complexity of this task is based on the non-linearity of the problem.
+Each act has a set of attributes which have certain values from 0.2 to 1. The higher the value, the better the attribute. When an act at a stage is over, new values for the attributes are generated.
 
-**Definition of the problem:**
+Instances of the species `Guest` want to attend acts. As there are multiple stages, they have a choice between different acts. Each visitor has a set of preferences with values from 0.2 to 1. These preferences can be used to calculate a utility for each act. The utility calculation works as follows:
 
-**Parameters:**
+```
+utility = attribute1*preference1 + attribute2*preference2 ...
+```
+
+When a guest does not have any specific location, he/she asks all stages to transmit the attributes of their act. After the guest receives them, the guest uses these attributes and his/her own preferences to find the act with the highest utility. Afer the decision, the `targetStage` receives the question of the guest where exactly he/she should stand/sit on the guest floor. The guest then receives the exact location where he/she should go to.
+
+## Task 3 - Improving Global Utility by Sacrificing Individual Utility
+
+Building on the model of task 2, the model `ImproveGlobalUtility` assess the decision of each `Guest` after he/she decided. A central instance `Optimiser` helps with this.
+
+The central part of this extended model is a new preference value for each `Guest`. Each guest either loves or hates crowded places. This preference affects the global utility either positively or negatively: If the guest likes the crowd, the proportion of the number of guests at the same act over the number of all guests is added to the global utility. If the guest does not like the crowd, this propotion gets subtracted from the global utility:
+
+```
+global_utility = utility_guest_1 + (guest_1_loves_crowd ? guests_at_same_event / all_guests : - guests_at_same_event / all_guests) + utility_guest_1 ...
+```
+
+Each `Stage` informs the `Optimiser` about the guests who attend each act. The optimiser then registers all empty acts and tries to find an act which has more than half of all guests. Also, it scans the guests of this crowded act to have a look if there is a guest who does not like crowds and is therefore sent to another empty act. The optimiser also checks the acts with exactly two attending guests. If these acts have one guest who does not like crowds while the other one loves them, the latter guest is moved to the crowded act.
+
+The global utility is shown on the console before and after the movement of a few guests. Often, an improvement of the global utility can be observed. However, the movement decision is not based on the resulting utility and can therefore also result in a decrease of the global utility.
+
+## Optimise Global Efficiency
+
+To find the ideal distribution of guests, all guests and all stages have to send their preferences and attributes to the central optimiser where the optimisationg could be attempted. However, this optimisation is non-linear and an efficient solution not that obvious.
+
+### Problem Definition
+
+#### Parameters
 
 {a, b, c, ..., j, ..., m} = Stages
 
@@ -55,7 +81,7 @@ The complexity of this task is based on the non-linearity of the problem.
 
 m<sub>i</sub> = 1 if agent i enjoys crowds, -1 else
 
-**Variables:**
+#### Variables
 
 a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... = 1 if agent i select Stage a<sub>i</sub> (or b<sub>i</sub>, c<sub>i</sub>, ...), 0 else
 
@@ -75,12 +101,12 @@ n<sub>a</sub> + n<sub>b</sub> + n<sub>c</sub> + ... = n (the sum of all the agen
 
 ...
 
-**Objective Function:**
+#### Objective Function
 
 max( Σ<sub>i</sub>  [(a<sub>i</sub>*n<sub>a</sub> + b<sub>i</sub>*n<sub>b</sub> + c<sub>i</sub>*n<sub>c</sub> + ...) * m<sub>i</sub>])
 
-The Objective function is non-linear as each variable a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... is multiplied by the corresponding variable n<sub>a</sub>, n<sub>b</sub>, n<sub>c</sub>, ... .
+The Objective function is non-linear because each variable a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... is multiplied by the corresponding variable n<sub>a</sub>, n<sub>b</sub>, n<sub>c</sub>, ... .
 
-The non-linearity of the problem implies that the search for a global maximum of the Objective Function it's unoptimal due to the time constraint (even though an optimal solution can be found, it's not ideal since it would take too much time to be adopted).
+The non-linearity of the problem implies that the search for a global maximum of the objective function is unoptimal due to the needed time (even though an optimal solution can be found, it is not ideal since it would take too much time to be adopted).
 
-One solution is to perturbate the Global Utility value (that is equal to the Utility values of all the Agents) around the solution found by the base Utility problem. On the basis of that, after each Agent selects its own favourite Stage (the one that maximizes its Utility value), the Leader Agent will try to change some Agents' Stage selection in order to evaluate if the Global Utility value can increase.
+One solution is to perturbate the global utility value around the solution found by the base utility problem. On the basis of that, after each `Guest` selects his/her own favourite `Stage` (the one that maximises his/her utility), the `Optimiser` will try to change some guests' stage selection in order to evaluate if the global utility value can be increased.

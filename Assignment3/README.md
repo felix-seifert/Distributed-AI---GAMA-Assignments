@@ -47,16 +47,16 @@ The complexity of this task is based on the non-linearity of the problem.
 
 **Definition of the problem:**
 
-Parameters:
+**Parameters:**
 
 m<sub>i</sub> = 1 if agent i enjoys crowds, -1 else
 
-Variables:
+**Variables:**
 
 a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... = 1 if agent i select Stage a<sub>i</sub> (or b<sub>i</sub>, c<sub>i</sub>, ...), 0 else
 n<sub>a</sub>, n<sub>b</sub>, n<sub>c</sub>, ... = number of agents visiting the a, b, c, ... Stage
 
-Constraints:
+**Constraints:**
 
 a<sub>i</sub> + b<sub>i</sub> + c<sub>i</sub> + ... = 1 (each Agent can only choose one Stage)
 
@@ -70,6 +70,8 @@ n<sub>a</sub> + n<sub>b</sub> + n<sub>c</sub> + ... = n (the sum of all the agen
 
 ...
 
-Objective function:
+**Objective function:**
 
 max( Σ<sub>i</sub>  [(a<sub>i</sub>*n<sub>a</sub> + b<sub>i</sub>*n<sub>b</sub> + c<sub>i</sub>*n<sub>c</sub> + ...) * m<sub>i</sub>])
+
+The Objective function is non-linear as each variable a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... is multiplied by the corresponding n<sub>a</sub>, n<sub>b</sub>, n<sub>c</sub>, ... .

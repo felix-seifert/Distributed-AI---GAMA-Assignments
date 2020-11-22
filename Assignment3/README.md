@@ -49,6 +49,10 @@ The complexity of this task is based on the non-linearity of the problem.
 
 **Parameters:**
 
+{a, b, c, ..., j, ..., m} = Stages
+
+{1, 2, 3, ..., i, ..., n} = Agents
+
 m<sub>i</sub> = 1 if agent i enjoys crowds, -1 else
 
 **Variables:**

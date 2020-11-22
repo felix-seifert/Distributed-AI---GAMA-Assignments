@@ -68,7 +68,7 @@ species Stage skills: [fipa] {
 	
 	action generateActAttributes {
 		loop attr over: importantAttributes {
-			add attr::rnd(0.0, 1.0) to: actAttributes;
+			add attr::rnd(0.2, 1.0) to: actAttributes;
 		}
 	}
 	
@@ -139,11 +139,11 @@ species Guest skills: [moving, fipa] {
 	point targetLocation <- nil;
 	float currentUtility <- 0.0;
 	
-	map<string, float> weightOfAttributes;
+	map<string, float> preferences;
 	
 	init {
 		loop attr over: importantAttributes {
-			add attr::rnd(0.0, 1.0) to: weightOfAttributes;
+			add attr::rnd(0.2, 1.0) to: preferences;
 		}
 	}
 	
@@ -187,8 +187,8 @@ species Guest skills: [moving, fipa] {
 		
 		float result <- 0.0;
 		
-		loop attr over: weightOfAttributes.keys {
-			result <- result + (weightOfAttributes[attr] * actsAttributes[attr]);
+		loop attr over: preferences.keys {
+			result <- result + (preferences[attr] * actsAttributes[attr]);
 		}
 		
 		return result;

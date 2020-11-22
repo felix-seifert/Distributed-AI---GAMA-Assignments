@@ -16,6 +16,8 @@ The Chess Board is created by alternating white and black cells based on the par
 
 When a Queen is placed along its column, it checks if its position is compatible with the previous Queens' ones. This happen through the Queen's reflex validPositioning. If the new cell selected for the i-th Queen that is trying to be placed is compatible with the rest of the Queens, its boolean variable onPosition will be true. From this point the next Queen [(i+1)-th] will be able to start to position itself. Each Queen has a boolean variable checkRowColumnDiagonalsCollision that is false if any of the previous Queens (1st, 2nd, ..., [(i-1)-th]) is occuping its row, column or diagonals cells. If this happen, the previous Queen's onPosition variable will be changed to false as there's no compatible setting for the new Queen on the Chess Board. When the previous Queens establish a new setting for the Board (all of them will have the onPosition value set on true), the i-th Queen will try again to position itself. If this Queen will be able to find a valid position, the next Queen will try to position itself; otherwise the previous Queens will - again - find a new setting on the Chess Board.
 
+This procedure will go on until all the Queens have a true value for the onPosition variable - then the process will stop.
+
 ## Task 2 - Decision-making Based on Individual Utility
 
 Report for task 2

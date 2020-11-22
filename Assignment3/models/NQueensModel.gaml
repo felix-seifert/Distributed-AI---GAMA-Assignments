@@ -53,19 +53,16 @@ species Queen skills:[moving] {
 	}
 	
 	
-	//check if new cell does not overlap with previous ones
 	bool checkRowColumnDiagonalsCollision(chessBoard newPosition) {
 
 		if (precedentQueen = nil) {
 			return true;
 		}
 		
-		//check row, col and diagonal
 		return precedentQueen.row != newPosition.grid_y and abs(precedentQueen.row - newPosition.grid_y) != abs(precedentQueen.column - newPosition.grid_x) and precedentQueen.checkRowColumnDiagonalsCollision(newPosition);	
 	}
 	
 	
-	//remove when: targetPoint = nil to remove waiting time
 	reflex validPositioning when: (precedentQueen = nil or precedentQueen.onPosition = true) and !onPosition and targetCell = nil {
 		
 		if (row < boardSize - 1) {

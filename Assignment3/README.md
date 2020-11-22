@@ -56,6 +56,15 @@ Variables:
 a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... = 1 if agent i select Stage a<sub>i</sub> (or b<sub>i</sub>, c<sub>i</sub>, ...), 0 else
 n<sub>a</sub>, n<sub>b</sub>, n<sub>c</sub>, ... = number of agents visiting the a, b, c, ... Stage
 
+Constraints:
+
+a<sub>i</sub> + b<sub>i</sub> + c<sub>i</sub> + ... = 1 (each Agent can only choose one Stage)
+n<sub>a</sub> + n<sub>b</sub> + n<sub>c</sub> + ... = n (the sum of all the agents in each Stage has to be equal to the total number of Agents in the Festival)
+Σ<sub>i</sub> a<sub>i</sub> = n<sub>a</sub> (the number of Agents at the Stage a is equal to the number of Agents that selected that Stage) 
+Σ<sub>i</sub> b<sub>i</sub> = n<sub>b</sub> (the number of Agents at the Stage b is equal to the number of Agents that selected that Stage) 
+Σ<sub>i</sub> c<sub>i</sub> = n<sub>c</sub> (the number of Agents at the Stage c is equal to the number of Agents that selected that Stage) 
+...
+
 Objective function:
 
 max( Σ<sub>i</sub>  [(a<sub>i</sub>*n<sub>a</sub> + b<sub>i</sub>*n<sub>b</sub> + c<sub>i</sub>*n<sub>c</sub> + ...) * m<sub>i</sub>])

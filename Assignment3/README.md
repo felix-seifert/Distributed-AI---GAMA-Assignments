@@ -58,4 +58,4 @@ n<sub>a</sub>, n<sub>b</sub>, n<sub>c</sub>, ... = number of agents visiting the
 
 Objective function:
 
-max( $\sum_{i=1}^{10} t_i$  [(a<sub>i</sub>*n<sub>a</sub> + b<sub>i</sub>*n<sub>b</sub> + c<sub>i</sub>*n<sub>c</sub> + ...) * m<sub>i</sub>])
+max( \sum_{i=1}^{10} t_i  [(a<sub>i</sub>*n<sub>a</sub> + b<sub>i</sub>*n<sub>b</sub> + c<sub>i</sub>*n<sub>c</sub> + ...) * m<sub>i</sub>])

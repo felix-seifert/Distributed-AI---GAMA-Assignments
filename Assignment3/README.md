@@ -2,7 +2,7 @@
 
 ## Task 1 - N Queens Problem
 
-The N Queens problem requires to place N Queens on a NxN Chess Board. Each Queen has to be place on independent row, column and diagonals that are not share with any other Queen (each Queen can't have another queen on their available moving trajectory on the Chess Board). The base setting for this problem assign each Queen to each of the column of the Chess Board. There's always at least one valid solution for this problem.
+The N Queens problem requires to place N Queens on a NxN Chess Board. Each Queen has to be place on independent row, column and diagonals that are not share with any other Queen (each Queen can't have another queen on its available moving trajectory on the Chess Board). The base setting for this problem assign each Queen to each of the column of the Chess Board. There's always at least one valid solution for this problem.
 
 This problem can be solved with a centralized backtrack control system, for which each time one Queen can't be placed due to the position of the other Queens, it requires the previous Queen to change it position. This process can go back to the first Queen. Once the previous Queens changed their position, the new Queen can check if there's a valid posisition on it's column. If this isn't possible, the backtrack algorithm will try to fix the previous Queens' position again, until the new Chess Board setting is valid. Once this happen, the Queen of the next column will be allowed to try to find its own position. Once the N-th Queen is correctly placed, the algorithm stops.
 

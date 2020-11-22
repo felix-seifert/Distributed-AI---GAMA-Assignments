@@ -10,7 +10,7 @@ It's possible to solve this problem also with a Multiagent approach, by allowing
 The arrangement system is the same as the centralized control system: everytime the i-th Queen is not allowed to have a valid position along its column due to the incompatibility with the previous Queens' placement, it will talk with the previous one [(i-1)-th] to find a position that allows it (the i-th) to find a valid position.
 In this way the problem can be solved by having each agent acting on its own and not by being placed by a centralized system.
 
-Code analysis:
+**Code analysis:**
 
 The Chess Board is created by alternating white and black cells based on the parity/disparity of the cell. If the sum of the cell's x and y is even, the cell will be white; otherwise it will be black. For example, the first cell is (0, 0), so the remainder of (0+0)/2 is 0, that makes the first cell white. The (0, 1) and (1, 0) will be black, because the remainder of the division (1+0)/2 (or (0+1)/2) is 1.
 

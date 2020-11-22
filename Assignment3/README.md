@@ -27,15 +27,15 @@ This procedure will go on until all the Queens have a true value for the onPosit
 
 Slow speed demonstration of the N=10 case:
 
-<img src="https://github.com/felix-seifert/Distributed-AI---GAMA-Assignments/blob/main/Assignment3/includes/data/nQueen10.gif?raw=true">
+<img src="https://github.com/felix-seifert/Distributed-AI---GAMA-Assignments/blob/main/Assignment3/nQueen10.gif?raw=true">
 
 High speed demonstration of the N=18 case (~ 500'000 cycles, ~1 minute and 20 seconds):
 
-<img src="https://github.com/felix-seifert/Distributed-AI---GAMA-Assignments/blob/main/Assignment3/includes/data/nQueen18.gif?raw=true">
+<img src="https://github.com/felix-seifert/Distributed-AI---GAMA-Assignments/blob/main/Assignment3/nQueen18.gif?raw=true">
 
 Final result of the N=20 case (~ 2'227'000 cycles, ~7 minute and 20 seconds):
 
-<img src="https://github.com/felix-seifert/Distributed-AI---GAMA-Assignments/blob/main/Assignment3/includes/data/nQueen20.gif?raw=true">
+<img src="https://github.com/felix-seifert/Distributed-AI---GAMA-Assignments/blob/main/Assignment3/nQueen20.gif?raw=true">
 
 ## Task 2 - Decision-making Based on Individual Utility
 

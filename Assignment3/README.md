@@ -23,6 +23,18 @@ When the previous Queens establish a new setting for the Board (that means that 
 
 This procedure will go on until all the Queens have a true value for the onPosition variable - then the process will stop.
 
+**Examples:**
+
+Slow speed demonstration of the N=10 case:
+
+<img src="https://raw.githubusercontent.com/felix-seifert/Distributed-AI---GAMA-Assignments/main/Assignment3/includes/data/nQueen1.gif?token=AIYQXFQGDXOM7TD7R6YSX6S7YPI5Y">
+
+High speed demonstration of the N=18 case (~ 500'000 cycles, ~1 minute and 20 seconds):
+
+<img src="https://raw.githubusercontent.com/felix-seifert/Distributed-AI---GAMA-Assignments/main/Assignment3/includes/data/nQueen1.gif?token=AIYQXFQGDXOM7TD7R6YSX6S7YPI5Y">
+
+Final result of the N=20 case (~ 2'227'000 cycles, ~7 minute and 20 seconds):
+
 <img src="https://raw.githubusercontent.com/felix-seifert/Distributed-AI---GAMA-Assignments/main/Assignment3/includes/data/nQueen1.gif?token=AIYQXFQGDXOM7TD7R6YSX6S7YPI5Y">
 
 ## Task 2 - Decision-making Based on Individual Utility

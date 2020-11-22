@@ -53,4 +53,9 @@ m<sub>i</sub> = 1 if agent i enjoys crowds, -1 else
 
 Variables:
 
-a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... = 1 if agent i select Stage a<sub>i</sub> (or b<subt>i</sub>, c<sub>i</sub>, ...), 0 else
+a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... = 1 if agent i select Stage a<sub>i</sub> (or b<sub>i</sub>, c<sub>i</sub>, ...), 0 else
+n<sub>a</sub>, n<sub>b</sub>, n<sub>c</sub>, ... = number of agents visiting the a, b, c, ... Stage
+
+Objective function:
+
+max( sum[(a<sub>i</sub>*n<sub>a</sub> + b<sub>i</sub>*n<sub>b</sub> + c<sub>i</sub>*n<sub>c</sub> + ...) * m<sub>i</sub>])

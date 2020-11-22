@@ -49,8 +49,8 @@ The complexity of this task is based on the non-linearity of the problem.
 
 Parameters:
 
-m<subscript>i</subscript> = 1 if agent i enjoys crowds, -1 else
+m<sub>i</sub> = 1 if agent i enjoys crowds, -1 else
 
 Variables:
 
-a<subscript>i</subscript>, b<subscript>i</subscript>, c<subscript>i</subscript>, ... = 1 if agent i select Stage a<subscript>i</subscript> (or b<subscript>i</subscript>, c<subscript>i</subscript>, ...), 0 else
+a<sub>i</sub>, b<sub>i</sub>, c<sub>i</sub>, ... = 1 if agent i select Stage a<sub>i</sub> (or b<subt>i</sub>, c<sub>i</sub>, ...), 0 else

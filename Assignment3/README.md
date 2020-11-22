@@ -10,6 +10,12 @@ It's possible to solve this problem also with a Multiagent approach, by allowing
 The arrangement system is the same as the centralized control system: everytime the i-th Queen is not allowed to have a valid position along its column due to the incompatibility with the previous Queens' placement, it will talk with the previous one [(i-1)-th] to find a position that allows it (the i-th) to find a valid position.
 In this way the problem can be solved by having each agent acting on its own and not by being placed by a centralized system.
 
+Code analysis:
+
+The Chess Board is created by alternating white and black cells based on the parity/disparity of the cell. If the sum of the cell's x and y is even, the cell will be white; otherwise it will be black. For example, the first cell is (0, 0), so the remainder of (0+0)/2 is 0, that makes the first cell white. The (0, 1) and (1, 0) will be black, because the remainder of the division (1+0)/2 (or (0+1)/2) is 1.
+
+When a Queen is placed along its column, it checks if its position is compatible with the previous Queens' ones. This happen through the Queen's reflex validPositioning. If the new cell selected for the i-th Queen that is trying to be placed is compatible with the rest of the Queens, its boolean variable onPosition will be true. From this point the next Queen [(i+1)-th] will be able to start to position itself. Each Queen has a boolean variable checkRowColumnDiagonalsCollision that is false if any of the previous Queens (1st, 2nd, ..., [(i-1)-th]) is occuping its row, column or diagonals cells. If this happen, the previous Queen's onPosition variable will be changed to false as there's no compatible setting for the new Queen on the Chess Board. When the previous Queens establish a new setting for the Board (all of them will have the onPosition value set on true), the i-th Queen will try again to position itself. If this Queen will be able to find a valid position, the next Queen will try to position itself; otherwise the previous Queens will - again - find a new setting on the Chess Board.
+
 ## Task 2 - Decision-making Based on Individual Utility
 
 Report for task 2

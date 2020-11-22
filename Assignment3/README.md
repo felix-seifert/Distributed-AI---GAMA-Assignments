@@ -40,3 +40,11 @@ Final result of the N=20 case (~ 2'227'000 cycles, ~7 minute and 20 seconds):
 ## Task 2 - Decision-making Based on Individual Utility
 
 Report for task 2
+
+## Challenge Task
+
+The complexity of this task is based on the non-linearity of the problem.
+
+**Definition of the problem:**
+
+Parameters:

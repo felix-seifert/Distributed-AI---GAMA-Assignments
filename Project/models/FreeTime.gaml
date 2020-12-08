@@ -28,8 +28,6 @@ global {
 		create PartyLover number: 2;
 		create ChillPerson number: 2;
 		create Criminal number: 2;
-		create Journalist number: 2;
-		create Scientist number: 2;
 	}
 }
 
@@ -183,14 +181,6 @@ species Criminal parent: Mover {
 	rgb color <- rgb(75, 75, 180);
 }
 
-species Journalist parent: Mover {
-	rgb color <- rgb(200, 200, 40);
-}
-
-species Scientist parent: Mover {
-	rgb color <- rgb(100, 200, 100);
-}
-
 grid Cell width: gridWidth height: gridHeight neighbors: 4 {}
 
 experiment EnjoyFreeTime type: gui {
@@ -205,8 +195,6 @@ experiment EnjoyFreeTime type: gui {
 			species PartyLover;
 			species ChillPerson;
 			species Criminal;
-			species Journalist;
-			species Scientist;
 		}
 	}
 }

@@ -65,6 +65,27 @@ species Stall skills: [fipa] {
 
 species Pub parent: Stall {
 	image_file icon <- image_file("../includes/data/pub.png");
+	
+	bool kitchenOpen <- true;
+	int kitchenOpenedCycles <- 100;
+	int kitchenClosedCycles <- 50;
+	int currentCycle <- 0;
+	
+	reflex openKitchen when: !kitchenOpen and currentCycle >= kitchenClosedCycles {
+		kitchenOpen <- true;
+		currentCycle <- 0;
+		write self.name + ' opened kitchen';
+	}
+	
+	reflex closeKitchen when: kitchenOpen and currentCycle >= kitchenOpenedCycles {
+		kitchenOpen <- false;
+		currentCycle <- 0;
+		write self.name + ' closed kitchen';
+	}
+	
+	reflex timeProgress {
+		currentCycle <- currentCycle + 1;
+	}
 }
 
 species ConcertHall parent: Stall {

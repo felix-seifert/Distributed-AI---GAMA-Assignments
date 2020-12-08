@@ -13,9 +13,16 @@ global {
 	int gridHeight <- 10;
 	bool displayEntityName <- false;
 	
+	list<Stall> stalls <- [];
+	
+	string requestPlaceMsg <- 'request-place';
+	string providePlaceMsg <- 'receive-place';
+	
 	init {
 		create Pub number: 1;
 		create ConcertHall number: 1;
+		
+		stalls <- list(Pub) + list(ConcertHall);
 		
 		create PartyLover number: 2;
 		create ChillPerson number: 2;
@@ -31,6 +38,18 @@ species Stall skills: [fipa] {
 	rgb color <- rgb(240, 100, 100);
 	image_file icon <- nil;
 	geometry area <- rectangle(size, size);
+	
+	reflex assignPlace when: !empty(requests) {
+		
+		loop r over: requests {
+			list<unknown> c <- r.contents;
+			
+			if(c[0] = requestPlaceMsg) {
+				point assignedPlace <- any_location_in(area);
+				do inform message: r contents: [providePlaceMsg, assignedPlace];
+			}
+		}
+	}
 	
 	aspect default {
 		draw area color: color;
@@ -56,10 +75,55 @@ species Mover skills: [moving, fipa] {
 	float size <- 1.0;
 	rgb color <- rgb(80, 80, 255);
 	
-	Stall targetStall <- nil;
+	point targetLocation <- nil;
+	float chanceToGoToStall <- 0.01;
+	float chanceToLeaveStall <- 0.1;
 	
-	reflex randomMove when: targetStall = nil {
+	bool statusInStall <- false;
+	
+	int cyclesInStallMin <- 50;
+	int cyclesInStall <- 0;
+	
+	reflex randomMove when: targetLocation = nil and empty(informs) {
 		do wander;
+	}
+	
+	reflex moveToTarget when: targetLocation != nil {
+		do goto target: targetLocation;
+	}
+	
+	reflex decideToGoToStall when: targetLocation = nil 
+			and rnd(1.0) <= chanceToGoToStall and empty(informs) {
+		
+		do start_conversation to: [any(stalls)] performative: 'request' 
+				contents: [requestPlaceMsg];
+	}
+	
+	reflex receivePlaceInStall when: targetLocation = nil and !empty(informs) {
+		
+		loop i over: informs {
+			list<unknown> c <- i.contents;
+			
+			if(c[0] = providePlaceMsg) {
+				targetLocation <- c[1];
+			}
+		}
+	}
+	
+	reflex enterStall when: targetLocation != nil and !statusInStall 
+			and self distance_to targetLocation <= 10 {
+		statusInStall <- true;
+		cyclesInStall <- 0;
+	}
+	
+	reflex spendCycleInStall when: targetLocation != nil and statusInStall {
+		cyclesInStall <- cyclesInStall + 1;
+	}
+	
+	reflex leaveStall when: targetLocation != nil and statusInStall 
+			and cyclesInStall > cyclesInStallMin and rnd(1.0) <= chanceToLeaveStall {
+		targetLocation <- nil;
+		statusInStall <- false;
 	}
 	
 	aspect default {

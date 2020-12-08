@@ -14,6 +14,7 @@ global {
 	bool displayEntityName <- false;
 	
 	list<Stall> stalls <- [];
+	list<string> musicGenres <- ['Rock', 'Metal', 'Blues', 'Funk', 'Hip Hop'];
 	
 	string requestPlaceMsg <- 'request-place';
 	string providePlaceMsg <- 'receive-place';
@@ -68,6 +69,20 @@ species Pub parent: Stall {
 
 species ConcertHall parent: Stall {
 	image_file icon <- image_file("../includes/data/concert-hall.png");
+	
+	int concertCycles <- 70;
+	int currentCycles <- 0;
+	string currentConcertGenre <- any(musicGenres);
+	
+	reflex startNewConcert when: currentCycles > concertCycles {
+		currentCycles <- 0;
+		currentConcertGenre <- any(musicGenres);
+		write self.name + ' started a concert with the genre ' + currentConcertGenre;
+	}
+	
+	reflex continueConcert {
+		currentCycles <- currentCycles + 1;
+	}
 }
 
 species Mover skills: [moving, fipa] {

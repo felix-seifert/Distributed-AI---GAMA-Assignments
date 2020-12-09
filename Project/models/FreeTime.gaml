@@ -20,6 +20,8 @@ global {
 	int nbChillPeople <- 2;
 	int nbCriminals <- 2;
 	
+	int nbAllMovers <- nbPartyLovers + nbChillPeople + nbCriminals;
+	
 	list<Stall> stalls <- [];
 	list<string> musicGenres <- ['Rock', 'Metal', 'Blues', 'Funk', 'Hip Hop'];
 	
@@ -38,6 +40,24 @@ global {
 	string provideGuestListMsg <- 'they-are-here';
 	string inviteSomeoneForDrink <- 'invite-someone-for-drink';
 	string drinkInvitationMsg <- 'drink-invitation';
+	
+	int nbDrinkInvitations <- 0;
+	float globalGenerous <- 0.0;
+	
+	reflex updateGlobalGenerous when: cycle mod 10 = 0 {
+		
+		loop p over: list(PartyLover) {
+			globalGenerous <- globalGenerous + p.generous;
+		}
+		loop p over: list(ChillPerson) {
+			globalGenerous <- globalGenerous + p.generous;
+		}
+		loop p over: list(Criminal) {
+			globalGenerous <- globalGenerous + p.generous;
+		}
+		
+		globalGenerous <- globalGenerous / nbAllMovers;
+	}
 	
 	init {
 		create Pub number: nbPubs;
@@ -296,8 +316,9 @@ species Mover skills: [moving, fipa] {
 			
 			if(c[0] = drinkInvitationMsg) {
 				generous <- min(generous + incrementGenerous, 1);
-				write Mover(c[1]).name + ' increased generous value of ' 
-						+ self.name + ' to ' + self.generous;
+				nbDrinkInvitations <- nbDrinkInvitations + 1;
+//				write Mover(c[1]).name + ' increased generous value of ' 
+//						+ self.name + ' to ' + self.generous;
 			}
 		}
 	}
@@ -466,6 +487,16 @@ experiment EnjoyFreeTime type: gui {
 			species PartyLover;
 			species ChillPerson;
 			species Criminal;
+		}
+		display generous_chart {
+			chart 'Global Generosity' type: series {
+				data 'Global Generosity' value: globalGenerous color: #red;
+			}
+		}
+		display drink_invitations {
+			chart 'Drink Invitations' type: series {
+				data 'Number Drink Invitations' value: nbDrinkInvitations color: #blue;
+			}
 		}
 	}
 }

@@ -13,6 +13,13 @@ global {
 	int gridHeight <- 10;
 	bool displayEntityName <- false;
 	
+	int nbPubs <- 1;
+	int nbConcertHalls <- 1;
+	
+	int nbPartyLovers <- 2;
+	int nbChillPeople <- 2;
+	int nbCriminals <- 2;
+	
 	list<Stall> stalls <- [];
 	list<string> musicGenres <- ['Rock', 'Metal', 'Blues', 'Funk', 'Hip Hop'];
 	
@@ -33,14 +40,14 @@ global {
 	string drinkInvitationMsg <- 'drink-invitation';
 	
 	init {
-		create Pub number: 1;
-		create ConcertHall number: 1;
+		create Pub number: nbPubs;
+		create ConcertHall number: nbConcertHalls;
 		
 		stalls <- list(Pub) + list(ConcertHall);
 		
-		create PartyLover number: 2;
-		create ChillPerson number: 2;
-		create Criminal number: 2;
+		create PartyLover number: nbPartyLovers;
+		create ChillPerson number: nbChillPeople;
+		create Criminal number: nbCriminals;
 	}
 }
 
@@ -431,6 +438,23 @@ species Criminal parent: Mover {
 grid Cell width: gridWidth height: gridHeight neighbors: 4 {}
 
 experiment EnjoyFreeTime type: gui {
+ 
+	parameter "Width of grid: " var: gridWidth min: 10 max: 100 
+			category: "Grid Size";
+	parameter "Height of grid: " var: gridHeight min: 10 max: 100 
+			category: "Grid Size";
+	
+	parameter "Number of Pubs: " var: nbPubs min: 1 max: 10 
+			category: "Number of Stalls";
+	parameter "Number of Conert Halls: " var: nbConcertHalls min: 1 max: 10 
+			category: "Number of Stalls";
+			
+	parameter "Number of Party Lovers: " var: nbPartyLovers min: 20 max: 50 
+			category: "Number of Movers";
+	parameter "Number of Chill People: " var: nbChillPeople min: 20 max: 50 
+			category: "Number of Movers";
+	parameter "Number of Criminals: " var: nbCriminals min: 10 max: 20 
+			category: "Number of Movers";
 	
 	output {
 		display main_display {

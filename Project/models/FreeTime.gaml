@@ -25,6 +25,8 @@ global {
 	string leaveStallMsg <- 'leave-stall';
 	string inquireGenreMsg <- 'inquire-genre';
 	string informAboutGenreMsg <- 'inform-about-genre';
+	string inquireKitchenMsg <- 'inquire-kitchen';
+	string informAboutKitchenMsg <- 'inform-about-kitchen';
 	
 	init {
 		create Pub number: 1;
@@ -114,6 +116,17 @@ species Pub parent: Stall {
 		currentCycle <- 0;
 		write self.name + ' closed kitchen';
 	}
+	
+	reflex informAboutKitchen when: !empty(queries) {
+		
+		loop q over: queries {
+			list<unknown> c <- q.contents;
+			
+			if(c[0] = inquireKitchenMsg) {
+				do query message: q contents: [informAboutKitchenMsg, kitchenIsOpen];
+			}
+		}
+	}
 }
 
 species ConcertHall parent: Stall {
@@ -159,6 +172,8 @@ species Mover skills: [moving, fipa] {
 	int cyclesInStall <- 0;
 	
 	float generous <- rnd(0.35);
+	float hungry <- rnd(1.0);
+	
 	reflex randomMove when: targetStall = nil and empty(informs) {
 		do wander;
 	}
@@ -275,6 +290,38 @@ species ChillPerson parent: Mover {
 
 species Criminal parent: Mover {
 	rgb color <- rgb(75, 75, 180);
+	
+	reflex askIfKitchenIsOpen when: inStall and !oneTimeInteractionDone 
+			and targetStall.typeOfStall = typePub {
+		
+		do start_conversation to: [targetStall] performative: 'query' 
+				contents: [inquireKitchenMsg];
+		
+		oneTimeInteractionDone <- true;
+	}
+	
+	reflex reactOnKitchenInformation when: inStall and !empty(queries) {
+		
+		loop q over: queries {
+			list<unknown> c <- q.contents;
+			
+			if(c[0] = informAboutKitchenMsg) {
+				do stealFoodIfHungryAndLeaveStall kitchenIsOpen: bool(c[1]);
+			}
+		}
+	}
+	
+	action stealFoodIfHungryAndLeaveStall(bool kitchenIsOpen) {
+		
+		bool criminalIsHungryEnough <- hungry >= 0.5;
+		
+		if(kitchenIsOpen and criminalIsHungryEnough) {
+			
+			write self.name + ' stole food in ' + targetStall.name + ' and left';
+			
+			do leaveStallAction;
+		}
+	}
 }
 
 grid Cell width: gridWidth height: gridHeight neighbors: 4 {}

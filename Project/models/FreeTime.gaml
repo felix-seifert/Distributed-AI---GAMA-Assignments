@@ -27,6 +27,8 @@ global {
 	string informAboutGenreMsg <- 'inform-about-genre';
 	string inquireKitchenMsg <- 'inquire-kitchen';
 	string informAboutKitchenMsg <- 'inform-about-kitchen';
+	string askForGuestsMsg <- 'who-is-there';
+	string provideGuestListMsg <- 'they=are=here';
 	
 	init {
 		create Pub number: 1;
@@ -53,7 +55,7 @@ species Stall skills: [fipa] {
 	
 	int currentCycle <- 0;
 	
-	reflex assignPlace when: !empty(requests) {
+	reflex handleRequests when: !empty(requests) {
 		
 		loop r over: requests {
 			list<unknown> c <- r.contents;
@@ -61,6 +63,9 @@ species Stall skills: [fipa] {
 			if(c[0] = requestPlaceMsg) {
 				point assignedPlace <- any_location_in(area);
 				do inform message: r contents: [providePlaceMsg, assignedPlace];
+			}
+			else if(c[0] = askForGuestsMsg) {
+				do inform message: r contents: [provideGuestListMsg, guests];
 			}
 		}
 	}
@@ -171,6 +176,7 @@ species Mover skills: [moving, fipa] {
 	int cyclesInStallMin <- 50;
 	int cyclesInStall <- 0;
 	
+	float noisy <- rnd(0.2);
 	float generous <- rnd(0.35);
 	float hungry <- rnd(1.0);
 	
@@ -192,7 +198,7 @@ species Mover skills: [moving, fipa] {
 	}
 	
 	reflex receivePlaceInStall when: targetStall != nil and targetPlace = nil 
-			and !empty(informs) {
+			and !inStall and !empty(informs) {
 		
 		loop i over: informs {
 			list<unknown> c <- i.contents;
@@ -246,6 +252,8 @@ species Mover skills: [moving, fipa] {
 species PartyLover parent: Mover {
 	rgb color <- rgb(220, 120, 50);
 	
+	float noisy <- rnd(0.3, 1.0);
+	
 	list<string> favouriteMusicGenres <- [any(musicGenres), any(musicGenres)];
 	
 	reflex askForMusicGenre when: inStall and !oneTimeInteractionDone 
@@ -286,6 +294,47 @@ species PartyLover parent: Mover {
 
 species ChillPerson parent: Mover {
 	rgb color <- rgb(120, 120, 120);
+	
+	float generous <- rnd(0.3, 1.0);
+	
+	float maximumAcceptedNoiseLevel <- 0.4;
+	
+	reflex askForFellowGuests when: inStall and !oneTimeInteractionDone {
+		
+		do start_conversation to: [targetStall] performative: 'request'
+				contents: [askForGuestsMsg];
+		
+		oneTimeInteractionDone <- true;
+	}
+	
+	reflex reactOnFellowGuests when: inStall and !empty(informs) {
+		
+		loop i over: informs {
+			list<unknown> c <- i.contents;
+			
+			if(c[0] = provideGuestListMsg) {
+				do leaveIfOtherGuestIsTooNoisy guests: c[1];
+			}
+		}
+	}
+	
+	action leaveIfOtherGuestIsTooNoisy(list<Mover> guests) {
+		
+		float noiseLevel <- 0.0;
+		
+		loop g over: guests {
+			noiseLevel <- noiseLevel + g.noisy;
+		}
+		
+		noiseLevel <- noiseLevel / length(guests);
+		
+		if(noiseLevel > maximumAcceptedNoiseLevel) {
+			
+			write self.name + ' finds it too noisy in ' + targetStall.name + ' and left';
+			
+			do leaveStallAction;
+		}
+	}
 }
 
 species Criminal parent: Mover {

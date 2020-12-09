@@ -28,7 +28,9 @@ global {
 	string inquireKitchenMsg <- 'inquire-kitchen';
 	string informAboutKitchenMsg <- 'inform-about-kitchen';
 	string askForGuestsMsg <- 'who-is-there';
-	string provideGuestListMsg <- 'they=are=here';
+	string provideGuestListMsg <- 'they-are-here';
+	string inviteSomeoneForDrink <- 'invite-someone-for-drink';
+	string drinkInvitationMsg <- 'drink-invitation';
 	
 	init {
 		create Pub number: 1;
@@ -84,6 +86,27 @@ species Stall skills: [fipa] {
 		}
 		
 		//write 'Guests of ' + self.name + ': ' + guests;
+	}
+	
+	reflex someoneShouldReceiveDrink when: !empty(cfps) {
+		
+		loop call over: cfps {
+			list<unknown> c <- call.contents;
+			
+			if(c[0] = inviteSomeoneForDrink and length(guests) > 1) {
+				Mover chosenGuest <- chooseRandomGuest(call.sender);
+				
+				do start_conversation to: [chosenGuest] performative: 'propose'
+						contents: [drinkInvitationMsg, call.sender];
+			}
+		}
+	}
+	
+	Mover chooseRandomGuest(Mover guestWhichShouldBeIgnored) {
+		remove guestWhichShouldBeIgnored from: guests;
+		Mover chosenGuest <- any(guests);
+		add guestWhichShouldBeIgnored to: guests;
+		return chosenGuest;
 	}
 	
 	reflex timeProgress {
@@ -172,6 +195,7 @@ species Mover skills: [moving, fipa] {
 	
 	bool inStall <- false;
 	bool oneTimeInteractionDone <- false;
+	bool inviteForDrinkOptionChecked <- false;
 	
 	int cyclesInStallMin <- 50;
 	int cyclesInStall <- 0;
@@ -179,6 +203,10 @@ species Mover skills: [moving, fipa] {
 	float noisy <- rnd(0.2);
 	float generous <- rnd(0.35);
 	float hungry <- rnd(1.0);
+	
+	float valueForGenerousEnough <- 0.4;
+	float incrementGenerous <- 0.005;
+	float chanceToInviteSomeoneForDrink <- 0.5;
 	
 	reflex randomMove when: targetStall = nil and empty(informs) {
 		do wander;
@@ -217,6 +245,7 @@ species Mover skills: [moving, fipa] {
 				
 		inStall <- true;
 		oneTimeInteractionDone <- false;
+		inviteForDrinkOptionChecked <- false;
 		cyclesInStall <- 0;
 	}
 	
@@ -238,6 +267,32 @@ species Mover skills: [moving, fipa] {
 		targetStall <- nil;
 		targetPlace <- nil;
 		inStall <- false;
+	}
+	
+	reflex inviteForDrinkOption when: inStall and !inviteForDrinkOptionChecked {
+		
+		bool generousEnough <- generous > valueForGenerousEnough;
+		bool invite <- rnd(1.0) <= chanceToInviteSomeoneForDrink;
+		
+		if(generousEnough and invite) {
+			do start_conversation to: [targetStall] performative: 'cfp'
+					contents: [inviteSomeoneForDrink];
+		}
+		
+		inviteForDrinkOptionChecked <- true;
+	}
+	
+	reflex acceptDrinkInvitation when: !empty(proposes) {
+		
+		loop p over: proposes {
+			list<unknown> c <- p.contents;
+			
+			if(c[0] = drinkInvitationMsg) {
+				generous <- generous + incrementGenerous;
+				write Mover(c[1]).name + ' increased generous value of ' 
+						+ self.name + ' to ' + self.generous;
+			}
+		}
 	}
 	
 	aspect default {

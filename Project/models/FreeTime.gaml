@@ -44,6 +44,8 @@ species Stall skills: [fipa] {
 	
 	list<Mover> guests <- [];
 	
+	int currentCycle <- 0;
+	
 	reflex assignPlace when: !empty(requests) {
 		
 		loop r over: requests {
@@ -72,6 +74,10 @@ species Stall skills: [fipa] {
 		//write 'Guests of ' + self.name + ': ' + guests;
 	}
 	
+	reflex timeProgress {
+		currentCycle <- currentCycle + 1;
+	}
+	
 	aspect default {
 		draw area color: color;
 		
@@ -89,7 +95,6 @@ species Pub parent: Stall {
 	bool kitchenOpen <- true;
 	int kitchenOpenedCycles <- 100;
 	int kitchenClosedCycles <- 50;
-	int currentCycle <- 0;
 	
 	reflex openKitchen when: !kitchenOpen and currentCycle >= kitchenClosedCycles {
 		kitchenOpen <- true;
@@ -102,27 +107,18 @@ species Pub parent: Stall {
 		currentCycle <- 0;
 		write self.name + ' closed kitchen';
 	}
-	
-	reflex timeProgress {
-		currentCycle <- currentCycle + 1;
-	}
 }
 
 species ConcertHall parent: Stall {
 	image_file icon <- image_file("../includes/data/concert-hall.png");
 	
 	int concertCycles <- 70;
-	int currentCycle <- 0;
 	string currentConcertGenre <- any(musicGenres);
 	
 	reflex startNewConcert when: currentCycle > concertCycles {
 		currentCycle <- 0;
 		currentConcertGenre <- any(musicGenres);
 		write self.name + ' started concert with genre ' + currentConcertGenre;
-	}
-	
-	reflex timeProgress {
-		currentCycle <- currentCycle + 1;
 	}
 	
 	reflex informAboutMusicGenre when: !empty(queries) {

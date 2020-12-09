@@ -16,6 +16,9 @@ global {
 	list<Stall> stalls <- [];
 	list<string> musicGenres <- ['Rock', 'Metal', 'Blues', 'Funk', 'Hip Hop'];
 	
+	string typePub <- 'pub';
+	string typeConcertHall <- 'concert-hall';
+	
 	string requestPlaceMsg <- 'request-place';
 	string providePlaceMsg <- 'receive-place';
 	string enterStallMsg <- 'enter-stall';
@@ -41,6 +44,8 @@ species Stall skills: [fipa] {
 	rgb color <- rgb(240, 100, 100);
 	image_file icon <- nil;
 	geometry area <- rectangle(size, size);
+	
+	string typeOfStall <- nil;
 	
 	list<Mover> guests <- [];
 	
@@ -92,18 +97,20 @@ species Stall skills: [fipa] {
 species Pub parent: Stall {
 	image_file icon <- image_file("../includes/data/pub.png");
 	
-	bool kitchenOpen <- true;
+	string typeOfStall <- typePub;
+	
+	bool kitchenIsOpen <- true;
 	int kitchenOpenedCycles <- 100;
 	int kitchenClosedCycles <- 50;
 	
-	reflex openKitchen when: !kitchenOpen and currentCycle >= kitchenClosedCycles {
-		kitchenOpen <- true;
+	reflex openKitchen when: !kitchenIsOpen and currentCycle >= kitchenClosedCycles {
+		kitchenIsOpen <- true;
 		currentCycle <- 0;
 		write self.name + ' opened kitchen';
 	}
 	
-	reflex closeKitchen when: kitchenOpen and currentCycle >= kitchenOpenedCycles {
-		kitchenOpen <- false;
+	reflex closeKitchen when: kitchenIsOpen and currentCycle >= kitchenOpenedCycles {
+		kitchenIsOpen <- false;
 		currentCycle <- 0;
 		write self.name + ' closed kitchen';
 	}
@@ -111,6 +118,8 @@ species Pub parent: Stall {
 
 species ConcertHall parent: Stall {
 	image_file icon <- image_file("../includes/data/concert-hall.png");
+	
+	string typeOfStall <- typeConcertHall;
 	
 	int concertCycles <- 70;
 	string currentConcertGenre <- any(musicGenres);
@@ -224,7 +233,8 @@ species PartyLover parent: Mover {
 	
 	list<string> favouriteMusicGenres <- [any(musicGenres), any(musicGenres)];
 	
-	reflex askForMusicGenre when: inStall and !oneTimeInteractionDone {
+	reflex askForMusicGenre when: inStall and !oneTimeInteractionDone 
+			and targetStall.typeOfStall = typeConcertHall {
 		
 		do start_conversation to: [targetStall] performative: 'query' 
 				contents: [inquireGenreMsg];
@@ -251,6 +261,9 @@ species PartyLover parent: Mover {
 		bool generousEnoughToStay <- rnd(1.0) <= (1 - generous);
 		
 		if(!likeReceivedGenre and !generousEnoughToStay) {
+			
+			write self.name + ' does not like music in ' + targetStall.name + ' and left';
+			
 			do leaveStallAction;
 		}
 	}

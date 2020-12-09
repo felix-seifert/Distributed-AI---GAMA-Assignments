@@ -288,7 +288,7 @@ species Mover skills: [moving, fipa] {
 			list<unknown> c <- p.contents;
 			
 			if(c[0] = drinkInvitationMsg) {
-				generous <- generous + incrementGenerous;
+				generous <- min(generous + incrementGenerous, 1);
 				write Mover(c[1]).name + ' increased generous value of ' 
 						+ self.name + ' to ' + self.generous;
 			}

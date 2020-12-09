@@ -20,6 +20,8 @@ global {
 	string providePlaceMsg <- 'receive-place';
 	string enterStallMsg <- 'enter-stall';
 	string leaveStallMsg <- 'leave-stall';
+	string inquireGenreMsg <- 'inquire-genre';
+	string informAboutGenreMsg <- 'inform-about-genre';
 	
 	init {
 		create Pub number: 1;
@@ -54,20 +56,20 @@ species Stall skills: [fipa] {
 		}
 	}
 	
-	reflex guestEntersOrLeaves when: !empty(informs) {
+	reflex guestEntersOrLeaves when: !empty(subscribes) {
 		
-		loop i over: informs {
-			list<unknown> c <- i.contents;
+		loop s over: subscribes {
+			list<unknown> c <- s.contents;
 			
 			if(c[0] = enterStallMsg) {
-				add Mover(i.sender) to: guests;
+				add Mover(s.sender) to: guests;
 			}
 			else if(c[0] = leaveStallMsg) {
-				remove Mover(i.sender) from: guests;
+				remove Mover(s.sender) from: guests;
 			}
 		}
 		
-		write 'Guests of ' + self.name + ': ' + guests;
+		//write 'Guests of ' + self.name + ': ' + guests;
 	}
 	
 	aspect default {
@@ -122,6 +124,17 @@ species ConcertHall parent: Stall {
 	reflex timeProgress {
 		currentCycle <- currentCycle + 1;
 	}
+	
+	reflex informAboutMusicGenre when: !empty(queries) {
+		
+		loop q over: queries {
+			list<unknown> c <- q.contents;
+			
+			if(c[0] = inquireGenreMsg) {
+				do query message: q contents: [informAboutGenreMsg, currentConcertGenre];
+			}
+		}
+	}
 }
 
 species Mover skills: [moving, fipa] {
@@ -135,10 +148,12 @@ species Mover skills: [moving, fipa] {
 	float chanceToLeaveStall <- 0.1;
 	
 	bool inStall <- false;
+	bool oneTimeInteractionDone <- false;
 	
 	int cyclesInStallMin <- 50;
 	int cyclesInStall <- 0;
 	
+	float generous <- rnd(0.35);
 	reflex randomMove when: targetStall = nil and empty(informs) {
 		do wander;
 	}
@@ -169,12 +184,13 @@ species Mover skills: [moving, fipa] {
 	}
 	
 	reflex enterStall when: targetPlace != nil and !inStall 
-			and self distance_to targetPlace <= 10 {
+			and self.location = targetPlace {
 		
-		do start_conversation to: [targetStall] performative: 'inform' 
+		do start_conversation to: [targetStall] performative: 'subscribe' 
 				contents: [enterStallMsg];
 				
 		inStall <- true;
+		oneTimeInteractionDone <- false;
 		cyclesInStall <- 0;
 	}
 	
@@ -185,9 +201,14 @@ species Mover skills: [moving, fipa] {
 	reflex leaveStall when: inStall and cyclesInStall > cyclesInStallMin 
 			and rnd(1.0) <= chanceToLeaveStall {
 		
-		do start_conversation to: [targetStall] performative: 'inform' 
+		do leaveStallAction;
+	}
+	
+	action leaveStallAction {
+		
+		do start_conversation to: [targetStall] performative: 'subscribe' 
 				contents: [leaveStallMsg];
-				
+						
 		targetStall <- nil;
 		targetPlace <- nil;
 		inStall <- false;
@@ -206,6 +227,37 @@ species PartyLover parent: Mover {
 	rgb color <- rgb(220, 120, 50);
 	
 	list<string> favouriteMusicGenres <- [any(musicGenres), any(musicGenres)];
+	
+	reflex askForMusicGenre when: inStall and !oneTimeInteractionDone {
+		
+		do start_conversation to: [targetStall] performative: 'query' 
+				contents: [inquireGenreMsg];
+		
+		oneTimeInteractionDone <- true;
+	}
+	
+	reflex reactOnMusicGenre when: inStall and !empty(queries) {
+		
+		loop q over: queries {
+			list<unknown> c <- q.contents;
+			
+			if(c[0] = informAboutGenreMsg) {
+				do leaveStallIfMusicIsBad receivedMusicGenre: c[1];
+			}
+		}
+	}
+	
+	action leaveStallIfMusicIsBad(string receivedMusicGenre) {
+		
+		//write self.name + ' received the music genre ' + receivedMusicGenre;
+		
+		bool likeReceivedGenre <- favouriteMusicGenres contains receivedMusicGenre;
+		bool generousEnoughToStay <- rnd(1.0) <= (1 - generous);
+		
+		if(!likeReceivedGenre and !generousEnoughToStay) {
+			do leaveStallAction;
+		}
+	}
 }
 
 species ChillPerson parent: Mover {

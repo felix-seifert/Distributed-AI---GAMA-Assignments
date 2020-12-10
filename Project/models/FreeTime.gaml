@@ -364,7 +364,7 @@ species PartyLover parent: Mover {
 		//write self.name + ' received the music genre ' + receivedMusicGenre;
 		
 		bool likeReceivedGenre <- favouriteMusicGenres contains receivedMusicGenre;
-		bool generousEnoughToStay <- rnd(1.0) <= (1 - generous);
+		bool generousEnoughToStay <- rnd(1.0) <= generous;
 		
 		if(!likeReceivedGenre and !generousEnoughToStay) {
 			

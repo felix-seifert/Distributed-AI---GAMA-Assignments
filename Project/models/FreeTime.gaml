@@ -22,6 +22,10 @@ global {
 	
 	int nbAllMovers <- nbPartyLovers + nbChillPeople + nbCriminals;
 	
+	float valueForGenerousEnough <- 0.4;
+	float incrementGenerous <- 0.005;
+	float chanceToInviteSomeoneForDrink <- 0.5;
+	
 	list<Stall> stalls <- [];
 	list<string> musicGenres <- ['Rock', 'Metal', 'Blues', 'Funk', 'Hip Hop'];
 	
@@ -230,10 +234,6 @@ species Mover skills: [moving, fipa] {
 	float noisy <- rnd(0.2);
 	float generous <- rnd(0.35);
 	float hungry <- rnd(1.0);
-	
-	float valueForGenerousEnough <- 0.4;
-	float incrementGenerous <- 0.005;
-	float chanceToInviteSomeoneForDrink <- 0.5;
 	
 	reflex randomMove when: targetStall = nil and empty(informs) {
 		do wander;
@@ -476,6 +476,13 @@ experiment EnjoyFreeTime type: gui {
 			category: "Number of Movers";
 	parameter "Number of Criminals: " var: nbCriminals min: 10 max: 20 
 			category: "Number of Movers";
+			
+	parameter "Minimum Generosity to Invite for Drink: " var: valueForGenerousEnough min: 0.1 max: 1.0 
+			category: "Invitation for Drinks";
+	parameter "Chance to Invite for Drink: " var: chanceToInviteSomeoneForDrink min: 0.1 max: 1.0 
+			category: "Invitation for Drinks";
+	parameter "Increment of Generosity after Drink Invitation: " var: incrementGenerous min: 0.005 max: 0.1 
+			category: "Invitation for Drinks";
 	
 	output {
 		display main_display {

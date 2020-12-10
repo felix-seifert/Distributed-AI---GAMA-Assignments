@@ -13,12 +13,12 @@ global {
 	int gridHeight <- 10;
 	bool displayEntityName <- false;
 	
-	int nbPubs <- 1;
-	int nbConcertHalls <- 1;
+	int nbPubs <- 2;
+	int nbConcertHalls <- 2;
 	
-	int nbPartyLovers <- 2;
-	int nbChillPeople <- 2;
-	int nbCriminals <- 2;
+	int nbPartyLovers <- 20;
+	int nbChillPeople <- 20;
+	int nbCriminals <- 10;
 	
 	int nbAllMovers <- nbPartyLovers + nbChillPeople + nbCriminals;
 	
@@ -49,6 +49,8 @@ global {
 	float globalGenerous <- 0.0;
 	
 	reflex updateGlobalGenerous when: cycle mod 10 = 0 {
+		
+		globalGenerous <- 0.0;
 		
 		loop p over: list(PartyLover) {
 			globalGenerous <- globalGenerous + p.generous;
@@ -364,7 +366,7 @@ species PartyLover parent: Mover {
 		//write self.name + ' received the music genre ' + receivedMusicGenre;
 		
 		bool likeReceivedGenre <- favouriteMusicGenres contains receivedMusicGenre;
-		bool generousEnoughToStay <- rnd(1.0) <= generous;
+		bool generousEnoughToStay <- rnd(0.6) <= generous;
 		
 		if(!likeReceivedGenre and !generousEnoughToStay) {
 			
@@ -396,12 +398,12 @@ species ChillPerson parent: Mover {
 			list<unknown> c <- i.contents;
 			
 			if(c[0] = provideGuestListMsg) {
-				do leaveIfOtherGuestIsTooNoisy guests: c[1];
+				do leaveIfOtherGuestsAreTooNoisy guests: c[1];
 			}
 		}
 	}
 	
-	action leaveIfOtherGuestIsTooNoisy(list<Mover> guests) {
+	action leaveIfOtherGuestsAreTooNoisy(list<Mover> guests) {
 		
 		float noiseLevel <- 0.0;
 		

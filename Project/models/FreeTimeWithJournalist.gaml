@@ -9,33 +9,94 @@ model FreeTime
 
 global {
 	
-	int gridWidth <- 20;
-	int gridHeight <- 20;
+	//### PARAMETERS
+	int gridWidth <- 10;
+	int gridHeight <- 10;
 	bool displayEntityName <- false;
+	
+	int nbPubs <- 2;
+	int nbConcertHalls <- 2;
+	
+	int nbPartyLovers <- 20;
+	int nbChillPeople <- 20;
+	int nbCriminals <- 10;
+	
+	int nbAllMovers <- nbPartyLovers + nbChillPeople + nbCriminals;
+	
+	float valueForGenerousEnough <- 0.4;
+	float incrementGenerous <- 0.005;
+	float chanceToInviteSomeoneForDrink <- 0.5;
+	
+	int nbDrinkInvitations <- 0;
+	float globalGenerous <- 0.0;
 	
 	list<Stall> stalls <- [];
 	list<string> musicGenres <- ['Rock', 'Metal', 'Blues', 'Funk', 'Hip Hop'];
+	
+	//## STRINGS AND MSGS
+	string typePub <- 'pub';
+	string typeConcertHall <- 'concert-hall';
 	
 	string requestPlaceMsg <- 'request-place';
 	string providePlaceMsg <- 'receive-place';
 	string enterStallMsg <- 'enter-stall';
 	string leaveStallMsg <- 'leave-stall';
+	string inquireGenreMsg <- 'inquire-genre';
+	string informAboutGenreMsg <- 'inform-about-genre';
+	string inquireKitchenMsg <- 'inquire-kitchen';
+	string informAboutKitchenMsg <- 'inform-about-kitchen';
+	string askForGuestsMsg <- 'who-is-there';
+	string provideGuestListMsg <- 'they-are-here';
+	string inviteSomeoneForDrink <- 'invite-someone-for-drink';
+	string drinkInvitationMsg <- 'drink-invitation';
 	
-	string requestInterviewMsg <- 'request-interview';
-	string acceptInterviewMsg <- 'accept-interview';
-	string continueInterviewMsg <- 'continue-interview';
-	string finishInterviewMsg <- 'finishInterviewMsg';
+	//### BDI
+	float sightDistance <- 3.0;
+	
+	string pubAtLocation <- "pubAtLocation";
+    string emptyPubLocation <- "emptyPubLocation";
+    
+    predicate pubLocation <- new_predicate(pubAtLocation);
+    predicate choosePub <- new_predicate("choose a pub");
+    predicate hasFood <- new_predicate("steal food");
+    predicate findFood <- new_predicate("find food");
+    predicate consumeFood <- new_predicate("consume food");
+    
+    reflex end_simulation when: sum(Criminal collect each.stolenFoodConsumed)>10{
+    	do pause;
+    	ask Criminal{
+    		write name + " has consumed " + stolenFoodConsumed + "stolen food!";
+    	}
+    }
+	
+
+	//### REFLEXES
+	reflex updateGlobalGenerous when: cycle mod 10 = 0 {
+		
+		globalGenerous <- 0.0;
+		
+		loop p over: list(PartyLover) {
+			globalGenerous <- globalGenerous + p.generous;
+		}
+		loop p over: list(ChillPerson) {
+			globalGenerous <- globalGenerous + p.generous;
+		}
+		loop p over: list(Criminal) {
+			globalGenerous <- globalGenerous + p.generous;
+		}
+		
+		globalGenerous <- globalGenerous / nbAllMovers;
+	}
 	
 	init {
-		create Pub number: 4;
-		create ConcertHall number:4;
+		create Pub number: nbPubs;
+		create ConcertHall number: nbConcertHalls;
 		
 		stalls <- list(Pub) + list(ConcertHall);
 		
-		create PartyLover number: 2;
-		create ChillPerson number: 2;
-		create Criminal number: 2;
-		create Journalist number: 2;
+		create PartyLover number: nbPartyLovers;
+		create ChillPerson number: nbChillPeople;
+		create Criminal number: nbCriminals;
 	}
 }
 
@@ -46,9 +107,13 @@ species Stall skills: [fipa] {
 	image_file icon <- nil;
 	geometry area <- rectangle(size, size);
 	
+	string typeOfStall <- nil;
+	
 	list<Mover> guests <- [];
 	
-	reflex assignPlace when: !empty(requests) {
+	int currentCycle <- 0;
+	
+	reflex handleRequests when: !empty(requests) {
 		
 		loop r over: requests {
 			list<unknown> c <- r.contents;
@@ -57,23 +122,51 @@ species Stall skills: [fipa] {
 				point assignedPlace <- any_location_in(area);
 				do inform message: r contents: [providePlaceMsg, assignedPlace];
 			}
+			else if(c[0] = askForGuestsMsg) {
+				do inform message: r contents: [provideGuestListMsg, guests];
+			}
 		}
 	}
 	
-	reflex guestEntersOrLeaves when: !empty(informs) {
+	reflex guestEntersOrLeaves when: !empty(subscribes) {
 		
-		loop i over: informs {
-			list<unknown> c <- i.contents;
+		loop s over: subscribes {
+			list<unknown> c <- s.contents;
 			
 			if(c[0] = enterStallMsg) {
-				add Mover(i.sender) to: guests;
+				add Mover(s.sender) to: guests;
 			}
 			else if(c[0] = leaveStallMsg) {
-				remove Mover(i.sender) from: guests;
+				remove Mover(s.sender) from: guests;
 			}
 		}
 		
-		write 'Guests of ' + self.name + ': ' + guests;
+		//write 'Guests of ' + self.name + ': ' + guests;
+	}
+	
+	reflex someoneShouldReceiveDrink when: !empty(cfps) {
+		
+		loop call over: cfps {
+			list<unknown> c <- call.contents;
+			
+			if(c[0] = inviteSomeoneForDrink and length(guests) > 1) {
+				Mover chosenGuest <- chooseRandomGuest(call.sender);
+				
+				do start_conversation to: [chosenGuest] performative: 'propose'
+						contents: [drinkInvitationMsg, call.sender];
+			}
+		}
+	}
+	
+	Mover chooseRandomGuest(Mover guestWhichShouldBeIgnored) {
+		remove guestWhichShouldBeIgnored from: guests;
+		Mover chosenGuest <- any(guests);
+		add guestWhichShouldBeIgnored to: guests;
+		return chosenGuest;
+	}
+	
+	reflex timeProgress {
+		currentCycle <- currentCycle + 1;
 	}
 	
 	aspect default {
@@ -90,43 +183,65 @@ species Stall skills: [fipa] {
 species Pub parent: Stall {
 	image_file icon <- image_file("../includes/data/pub.png");
 	
-	bool kitchenOpen <- true;
+	string typeOfStall <- typePub;
+	
+	bool kitchenIsOpen <- true;
 	int kitchenOpenedCycles <- 100;
 	int kitchenClosedCycles <- 50;
-	int currentCycle <- 0;
 	
-	reflex openKitchen when: !kitchenOpen and currentCycle >= kitchenClosedCycles {
-		kitchenOpen <- true;
+	//### BDI
+	
+	int stealableFood <- rnd(5,10);
+	
+	//### REFLEXES
+	
+	reflex openKitchen when: !kitchenIsOpen and currentCycle >= kitchenClosedCycles {
+		kitchenIsOpen <- true;
 		currentCycle <- 0;
-		write self.name + ' opened kitchen';
+		//write self.name + ' opened kitchen';
 	}
 	
-	reflex closeKitchen when: kitchenOpen and currentCycle >= kitchenOpenedCycles {
-		kitchenOpen <- false;
+	reflex closeKitchen when: kitchenIsOpen and currentCycle >= kitchenOpenedCycles {
+		kitchenIsOpen <- false;
 		currentCycle <- 0;
-		write self.name + ' closed kitchen';
+		//write self.name + ' closed kitchen';
 	}
 	
-	reflex timeProgress {
-		currentCycle <- currentCycle + 1;
+	reflex informAboutKitchen when: !empty(queries) {
+		
+		loop q over: queries {
+			list<unknown> c <- q.contents;
+			
+			if(c[0] = inquireKitchenMsg) {
+				do query message: q contents: [informAboutKitchenMsg, kitchenIsOpen];
+			}
+		}
 	}
 }
 
 species ConcertHall parent: Stall {
 	image_file icon <- image_file("../includes/data/concert-hall.png");
 	
+	string typeOfStall <- typeConcertHall;
+	
 	int concertCycles <- 70;
-	int currentCycle <- 0;
 	string currentConcertGenre <- any(musicGenres);
 	
 	reflex startNewConcert when: currentCycle > concertCycles {
 		currentCycle <- 0;
 		currentConcertGenre <- any(musicGenres);
-		write self.name + ' started concert with genre ' + currentConcertGenre;
+		//write self.name + ' started concert with genre ' + currentConcertGenre;
 	}
 	
-	reflex timeProgress {
-		currentCycle <- currentCycle + 1;
+	reflex informAboutMusicGenre when: !empty(queries) {
+		
+		loop q over: queries {
+			list<unknown> c <- q.contents;
+			
+			if(c[0] = inquireGenreMsg) {
+				do query message: q contents: [informAboutGenreMsg, currentConcertGenre];
+			}
+		}
 	}
 }
 
@@ -141,10 +256,15 @@ species Mover skills: [moving, fipa] {
 	float chanceToLeaveStall <- 0.1;
 	
 	bool inStall <- false;
-	bool inInterview <- false;
+	bool oneTimeInteractionDone <- false;
+	bool inviteForDrinkOptionChecked <- false;
 	
 	int cyclesInStallMin <- 50;
 	int cyclesInStall <- 0;
+	
+	float noisy <- rnd(0.2);
+	float generous <- rnd(0.35);
+	float hungry <- rnd(1.0);
 	
 	reflex randomMove when: targetStall = nil and empty(informs) {
 		do wander;
@@ -155,7 +275,7 @@ species Mover skills: [moving, fipa] {
 	}
 	
 	reflex decideToGoToStall when: targetStall = nil 
-			and rnd(1.0) <= chanceToGoToStall and empty(informs) and !inInterview {
+			and rnd(1.0) <= chanceToGoToStall and empty(informs) {
 				
 		targetStall <- any(stalls);
 		
@@ -164,7 +284,7 @@ species Mover skills: [moving, fipa] {
 	}
 	
 	reflex receivePlaceInStall when: targetStall != nil and targetPlace = nil 
-			and !empty(informs) {
+			and !inStall and !empty(informs) {
 		
 		loop i over: informs {
 			list<unknown> c <- i.contents;
@@ -176,12 +296,14 @@ species Mover skills: [moving, fipa] {
 	}
 	
 	reflex enterStall when: targetPlace != nil and !inStall 
-			and self distance_to targetPlace <= 10 {
+			and self.location = targetPlace {
 		
-		do start_conversation to: [targetStall] performative: 'inform' 
+		do start_conversation to: [targetStall] performative: 'subscribe' 
 				contents: [enterStallMsg];
 				
 		inStall <- true;
+		oneTimeInteractionDone <- false;
+		inviteForDrinkOptionChecked <- false;
 		cyclesInStall <- 0;
 	}
 	
@@ -192,12 +314,44 @@ species Mover skills: [moving, fipa] {
 	reflex leaveStall when: inStall and cyclesInStall > cyclesInStallMin 
 			and rnd(1.0) <= chanceToLeaveStall {
 		
-		do start_conversation to: [targetStall] performative: 'inform' 
+		do leaveStallAction;
+	}
+	
+	action leaveStallAction {
+		
+		do start_conversation to: [targetStall] performative: 'subscribe' 
 				contents: [leaveStallMsg];
-				
+						
 		targetStall <- nil;
 		targetPlace <- nil;
 		inStall <- false;
+	}
+	
+	reflex inviteForDrinkOption when: inStall and !inviteForDrinkOptionChecked {
+		
+		bool generousEnough <- generous > valueForGenerousEnough;
+		bool invite <- rnd(1.0) <= chanceToInviteSomeoneForDrink;
+		
+		if(generousEnough and invite) {
+			do start_conversation to: [targetStall] performative: 'cfp'
+					contents: [inviteSomeoneForDrink];
+		}
+		
+		inviteForDrinkOptionChecked <- true;
+	}
+	
+	reflex acceptDrinkInvitation when: !empty(proposes) {
+		
+		loop p over: proposes {
+			list<unknown> c <- p.contents;
+			
+			if(c[0] = drinkInvitationMsg) {
+				generous <- min(generous + incrementGenerous, 1);
+				nbDrinkInvitations <- nbDrinkInvitations + 1;
+//				write Mover(c[1]).name + ' increased generous value of ' 
+//						+ self.name + ' to ' + self.generous;
+			}
+		}
 	}
 	
 	aspect default {
@@ -210,149 +364,245 @@ species Mover skills: [moving, fipa] {
 }
 
 species PartyLover parent: Mover {
-	
 	rgb color <- rgb(220, 120, 50);
-	float chanceToAcceptInterview <- 0.5;
+	
+	float noisy <- rnd(0.3, 1.0);
 	
 	list<string> favouriteMusicGenres <- [any(musicGenres), any(musicGenres)];
 	
-	reflex randomMove when: targetStall = nil and empty(informs) and !inStall and !inInterview{
-		do wander;
+	reflex askForMusicGenre when: inStall and !oneTimeInteractionDone 
+			and targetStall.typeOfStall = typeConcertHall {
+		
+		do start_conversation to: [targetStall] performative: 'query' 
+				contents: [inquireGenreMsg];
+		
+		oneTimeInteractionDone <- true;
 	}
 	
-	reflex moveToTarget when: targetPlace != nil and !inStall and !inInterview {
-		do goto target: targetPlace;
-	}
-	
-	reflex moveToInterview when: inInterview {
-		targetPlace <- nil;
-		targetStall <- nil;
-	}	
-	
-	reflex considerInterview when: !empty(requests) and rnd(1.0) <= chanceToAcceptInterview and !inInterview {
+	reflex reactOnMusicGenre when: inStall and !empty(queries) {
 		
-		write 'ACCEPTING INTERVIEW! #########################';
-		
-		loop r over: requests {
-			list<unknown> c <- r.contents;
-			if(c[0] = requestInterviewMsg) {
-				//STAY
-				inInterview <- true;
-
-				do inform message: r contents: [acceptInterviewMsg, any(Stall)]; 
-				//We can reimplement the memory feature, so the proposed Stall is one that has been visited
-			}
-		}
-	}
-	
-	reflex continueInterview when: !empty(informs) and inInterview{
-		
-		loop i over: informs {
-			list<unknown> c <- i.contents;
+		loop q over: queries {
+			list<unknown> c <- q.contents;
 			
-			if(c[0] = continueInterviewMsg) {
-				//
-				write string(i.sender) + 'is interviewing: ' + self.name;
-			}
-			else if(c[0] = finishInterviewMsg) {
-				targetPlace <- nil;
-				targetStall <- nil;
-				inInterview <- false;
+			if(c[0] = informAboutGenreMsg) {
+				do leaveStallIfMusicIsBad receivedMusicGenre: c[1];
 			}
 		}
 	}
-
+	
+	action leaveStallIfMusicIsBad(string receivedMusicGenre) {
+		
+		//write self.name + ' received the music genre ' + receivedMusicGenre;
+		
+		bool likeReceivedGenre <- favouriteMusicGenres contains receivedMusicGenre;
+		bool generousEnoughToStay <- rnd(0.6) <= generous;
+		
+		if(!likeReceivedGenre and !generousEnoughToStay) {
+			
+			//write self.name + ' does not like music in ' + targetStall.name + ' and left';
+			
+			do leaveStallAction;
+		}
+	}
 }
 
 species ChillPerson parent: Mover {
 	rgb color <- rgb(120, 120, 120);
-}
-
-species Criminal parent: Mover {
-	rgb color <- rgb(75, 75, 180);
-}
-
-species Journalist parent: Mover {
-	rgb color <- rgb(252, 186, 3);
 	
-	Mover targetInterview <- nil;
-	float chanceToInterview <- 0.5;
-	list<Stall> stallsReport <- [];
-	list<Mover> interviewedMovers <- [];
+	float generous <- rnd(0.3, 1.0);
 	
-	int cyclesInInterviewMin <- 50;
-	int cyclesInInterview <- 0;
+	float maximumAcceptedNoiseLevel <- 0.4;
 	
-	
-	reflex randomMove when: targetStall = nil and targetInterview = nil and empty(informs) and !inStall and !inInterview{
-		do wander;
-	}
-	
-	reflex moveToTarget when: targetPlace != nil and !inStall and !inInterview {
-		do goto target: targetPlace;
-	}
-	
-	reflex moveToInterview when: targetInterview != nil and !inStall {
-		do goto target: targetInterview;
-		targetStall <- nil;
-	}
+	reflex askForFellowGuests when: inStall and !oneTimeInteractionDone {
 		
-	
-	reflex decideToInterview when: targetInterview = nil 
-			and rnd(1.0) <= chanceToInterview and empty(informs) {
+		do start_conversation to: [targetStall] performative: 'request'
+				contents: [askForGuestsMsg];
 		
-		Mover nextTarget <- PartyLover closest_to(self);
-		
-		if !(nextTarget in interviewedMovers) {					
-			targetInterview <- PartyLover closest_to(self);
-			
-			do start_conversation to: [targetInterview] performative: 'request' 
-				contents: [requestInterviewMsg];
-		}
+		oneTimeInteractionDone <- true;
 	}
-
-	reflex askSuggestionAboutStall when: targetInterview != nil and !empty(informs) and !inInterview and self distance_to targetInterview <= 1.5{
+	
+	reflex reactOnFellowGuests when: inStall and !empty(informs) {
 		
 		loop i over: informs {
 			list<unknown> c <- i.contents;
 			
-			if(c[0] = acceptInterviewMsg) {
-				add c[1] to: stallsReport;
-				add i.sender to: interviewedMovers;
+			if(c[0] = provideGuestListMsg) {
+				do leaveIfOtherGuestsAreTooNoisy guests: c[1];
 			}
 		}
 	}
+	
+	action leaveIfOtherGuestsAreTooNoisy(list<Mover> guests) {
 		
-	reflex continueInterview when: targetInterview != nil and !inInterview and !inStall {
+		float noiseLevel <- 0.0;
 		
-		do start_conversation to: [targetInterview] performative: 'inform' 
-				contents: [continueInterviewMsg];
+		loop g over: guests {
+			noiseLevel <- noiseLevel + g.noisy;
+		}
+		
+		noiseLevel <- noiseLevel / length(guests);
+		
+		if(noiseLevel > maximumAcceptedNoiseLevel) {
+			
+			//write self.name + ' finds it too noisy in ' + targetStall.name + ' and left';
+			
+			do leaveStallAction;
+		}
+	}
+}
 
-		cyclesInInterview <- 0;
-		inInterview <- true;
+species Criminal parent: Mover control: simple_bdi {
+	rgb color <- rgb(75, 75, 180);
+	float size <- 1.5;
+	
+	//### BDI
+	point theftTarget;
+	int stolenFoodConsumed <- 0;
+	
+	init {
+		do add_desire(findFood);
 	}
 	
-	reflex spendCycleInInterview when: inInterview {
-		cyclesInInterview <- cyclesInInterview + 1;
-		//write cyclesInInterview;
+	perceive target: Pub where (each.stealableFood>0) in: sightDistance {
+		focus id: pubAtLocation var: location;
+		ask myself{
+			do remove_intention(findFood, false);
+		}
 	}
 	
-	reflex finishInterview when: inInterview and cyclesInInterview > cyclesInInterviewMin  {
-		write 'interview finished!#########################################################################';
+	rule belief: pubLocation new_desire: hasFood strength: 1.0;
+	rule belief: hasFood new_desire: consumeFood strength: 2.0;
+	
+	plan wander intention: findFood {
+		do wander;
+	}
+	
+	plan stealFood intention:hasFood {
+		if(theftTarget=nil){
+			do add_subintention(get_current_intention(), choosePub, true);
+			do current_intention_on_hold();
+		}
+		else{
+			do goto target: theftTarget;
+			if(theftTarget = location){
+				Pub currentPub <- Pub first_with (theftTarget = each.location);
+				if (currentPub.stealableFood>0) {
+					do add_belief(hasFood);
+					ask Pub {
+						stealableFood <- stealableFood - 1;
+					}
+				}
+				else{
+					do add_belief(new_predicate(emptyPubLocation, ["locationValue"::theftTarget]));
+				}
+				theftTarget <- nil;
+			}
+		}
+	}
+	
+	plan chooseClosestPub intention: choosePub instantaneous: true {
+		list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) collect (point(get_predicate(mental_state (each)).values["locationValue"]));
+		write "1. Possible pubs: " + possiblePubs;
+		list<point> emptyPubs <- get_beliefs_with_name(emptyPubLocation) collect (point(get_predicate(mental_state (each)).values["locationValue"]));
+		write "Empty pubs: " + emptyPubs;
 		
-		do start_conversation to: [targetInterview] performative: 'inform' 
-				contents: [finishInterviewMsg];
-				
-		targetInterview <- nil;
-		targetPlace <- nil;
-		inInterview <- false;
-		cyclesInInterview <- 0;
+		possiblePubs <- possiblePubs - emptyPubs;
+		
+		write "Possible pubs: " + possiblePubs;
+		
+		if (empty(possiblePubs)){
+			do remove_intention(hasFood, true);
+			write "EMTPY PUB LIST!";
+			
+		}
+		else{
+			write "PUB LIST AVAILABLE!";
+			write possiblePubs;
+			theftTarget <- (possiblePubs with_min_of (each distance_to self)).location;
+		}
+		do remove_intention(choosePub, true);
+	}
+	
+	plan leavePubUnnoticed intention: consumeFood {
+		point awayFromTheftPub <- {0.0, 0.0};
+		
+		loop while: (distance_to(awayFromTheftPub, theftTarget.location)<4.0){
+			awayFromTheftPub <- {rnd(0,float(gridWidth)),rnd(0,float(gridHeight))};
+		}
+		
+		do goto target:awayFromTheftPub;
+		if(awayFromTheftPub=location){
+			do remove_belief(hasFood);
+			do remove_intention(consumeFood, true);
+			stolenFoodConsumed <- stolenFoodConsumed + 1;
+		}
+	}
+	
+	
+
+
+	//### REFLEXES
+	
+	reflex askIfKitchenIsOpen when: inStall and !oneTimeInteractionDone 
+			and targetStall.typeOfStall = typePub {
+		
+		do start_conversation to: [targetStall] performative: 'query' 
+				contents: [inquireKitchenMsg];
+		
+		oneTimeInteractionDone <- true;
+	}
+	
+	reflex reactOnKitchenInformation when: inStall and !empty(queries) {
+		
+		loop q over: queries {
+			list<unknown> c <- q.contents;
+			
+			if(c[0] = informAboutKitchenMsg) {
+				do stealFoodIfHungryAndLeaveStall kitchenIsOpen: bool(c[1]);
+			}
+		}
+	}
+	
+	action stealFoodIfHungryAndLeaveStall(bool kitchenIsOpen) {
+		
+		bool criminalIsHungryEnough <- hungry >= 0.5;
+		
+		if(kitchenIsOpen and criminalIsHungryEnough) {
+			
+			//write self.name + ' stole food in ' + targetStall.name + ' and left';
+			
+			do leaveStallAction;
+		}
 	}
 }
 
 grid Cell width: gridWidth height: gridHeight neighbors: 4 {}
 
 experiment EnjoyFreeTime type: gui {
+ 
+	parameter "Width of grid: " var: gridWidth min: 10 max: 100 
+			category: "Grid Size";
+	parameter "Height of grid: " var: gridHeight min: 10 max: 100 
+			category: "Grid Size";
+	
+	parameter "Number of Pubs: " var: nbPubs min: 1 max: 10 
+			category: "Number of Stalls";
+	parameter "Number of Conert Halls: " var: nbConcertHalls min: 1 max: 10 
+			category: "Number of Stalls";
+			
+	parameter "Number of Party Lovers: " var: nbPartyLovers min: 20 max: 50 
+			category: "Number of Movers";
+	parameter "Number of Chill People: " var: nbChillPeople min: 20 max: 50 
+			category: "Number of Movers";
+	parameter "Number of Criminals: " var: nbCriminals min: 10 max: 20 
+			category: "Number of Movers";
+			
+	parameter "Minimum Generosity to Invite for Drink: " var: valueForGenerousEnough min: 0.1 max: 1.0 
+			category: "Invitation for Drinks";
+	parameter "Chance to Invite for Drink: " var: chanceToInviteSomeoneForDrink min: 0.1 max: 1.0 
+			category: "Invitation for Drinks";
+	parameter "Increment of Generosity after Drink Invitation: " var: incrementGenerous min: 0.005 max: 0.1 
+			category: "Invitation for Drinks";
 	
 	output {
 		display main_display {
@@ -364,7 +614,16 @@ experiment EnjoyFreeTime type: gui {
 			species PartyLover;
 			species ChillPerson;
 			species Criminal;
-			species Journalist;
+		}
+		display generous_chart {
+			chart 'Global Generosity' type: series {
+				data 'Global Generosity' value: globalGenerous color: #red;
+			}
+		}
+		display drink_invitations {
+			chart 'Drink Invitations' type: series {
+				data 'Number Drink Invitations' value: nbDrinkInvitations color: #blue;
+			}
 		}
 	}
 }

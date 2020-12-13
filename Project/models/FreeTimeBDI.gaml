@@ -9,7 +9,6 @@ model FreeTime
 
 global {
 	
-	//### PARAMETERS
 	int gridWidth <- 10;
 	int gridHeight <- 10;
 	bool displayEntityName <- false;
@@ -33,10 +32,10 @@ global {
 	list<Stall> stalls <- [];
 	list<string> musicGenres <- ['Rock', 'Metal', 'Blues', 'Funk', 'Hip Hop'];
 	
-	//## STRINGS AND MSGS
 	string typePub <- 'pub';
 	string typeConcertHall <- 'concert-hall';
 	
+	// Messages for communication
 	string requestPlaceMsg <- 'request-place';
 	string providePlaceMsg <- 'receive-place';
 	string enterStallMsg <- 'enter-stall';
@@ -50,7 +49,7 @@ global {
 	string inviteSomeoneForDrink <- 'invite-someone-for-drink';
 	string drinkInvitationMsg <- 'drink-invitation';
 	
-	//### BDI
+	// BDI
 	float sightDistance <- 3.0;
 	
 	string pubAtLocation <- "pubAtLocation";
@@ -62,15 +61,13 @@ global {
     predicate findFood <- new_predicate("find food");
     predicate consumeFood <- new_predicate("consume food");
     
-    reflex end_simulation when: sum(Criminal collect each.stolenFoodConsumed)>10{
+    reflex end_simulation when: sum(Criminal collect each.stolenFoodConsumed) > 10 {
     	do pause;
-    	ask Criminal{
+    	ask Criminal {
     		write name + " has consumed " + stolenFoodConsumed + "stolen food!";
     	}
     }
-	
 
-	//### REFLEXES
 	reflex updateGlobalGenerous when: cycle mod 10 = 0 {
 		
 		globalGenerous <- 0.0;
@@ -189,11 +186,8 @@ species Pub parent: Stall {
 	int kitchenOpenedCycles <- 100;
 	int kitchenClosedCycles <- 50;
 	
-	//### BDI
-	
+	// BDI
 	int stealableFood <- rnd(5,10);
-	
-	//### REFLEXES
 	
 	reflex openKitchen when: !kitchenIsOpen and currentCycle >= kitchenClosedCycles {
 		kitchenIsOpen <- true;
@@ -455,7 +449,7 @@ species Criminal parent: Mover control: simple_bdi {
 	rgb color <- rgb(75, 75, 180);
 	float size <- 1.5;
 	
-	//### BDI
+	// BDI
 	point theftTarget;
 	int stolenFoodConsumed <- 0;
 	
@@ -463,7 +457,7 @@ species Criminal parent: Mover control: simple_bdi {
 		do add_desire(findFood);
 	}
 	
-	perceive target: Pub where (each.stealableFood>0) in: sightDistance {
+	perceive target: Pub where (each.stealableFood > 0) in: sightDistance {
 		focus id: pubAtLocation var: location;
 		ask myself{
 			do remove_intention(findFood, false);
@@ -477,22 +471,22 @@ species Criminal parent: Mover control: simple_bdi {
 		do wander;
 	}
 	
-	plan stealFood intention:hasFood {
-		if(theftTarget=nil){
+	plan stealFood intention: hasFood {
+		if(theftTarget = nil) {
 			do add_subintention(get_current_intention(), choosePub, true);
 			do current_intention_on_hold();
 		}
-		else{
+		else {
 			do goto target: theftTarget;
-			if(theftTarget = location){
+			if(theftTarget = location) {
 				Pub currentPub <- Pub first_with (theftTarget = each.location);
-				if (currentPub.stealableFood>0) {
+				if(currentPub.stealableFood > 0) {
 					do add_belief(hasFood);
 					ask Pub {
 						stealableFood <- stealableFood - 1;
 					}
 				}
-				else{
+				else {
 					do add_belief(new_predicate(emptyPubLocation, ["locationValue"::theftTarget]));
 				}
 				theftTarget <- nil;
@@ -501,21 +495,24 @@ species Criminal parent: Mover control: simple_bdi {
 	}
 	
 	plan chooseClosestPub intention: choosePub instantaneous: true {
-		list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) collect (point(get_predicate(mental_state (each)).values["locationValue"]));
+		
+		list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) collect 
+				(point(get_predicate(mental_state(each)).values["location_value"]));
 		write "1. Possible pubs: " + possiblePubs;
-		list<point> emptyPubs <- get_beliefs_with_name(emptyPubLocation) collect (point(get_predicate(mental_state (each)).values["locationValue"]));
+		list<point> emptyPubs <- get_beliefs_with_name(emptyPubLocation) collect 
+				(point(get_predicate(mental_state(each)).values["location_value"]));
 		write "Empty pubs: " + emptyPubs;
 		
 		possiblePubs <- possiblePubs - emptyPubs;
 		
 		write "Possible pubs: " + possiblePubs;
 		
-		if (empty(possiblePubs)){
+		if(empty(possiblePubs) or possiblePubs = nil) {
 			do remove_intention(hasFood, true);
 			write "EMTPY PUB LIST!";
 			
 		}
-		else{
+		else {
 			write "PUB LIST AVAILABLE!";
 			write possiblePubs;
 			theftTarget <- (possiblePubs with_min_of (each distance_to self)).location;
@@ -526,22 +523,21 @@ species Criminal parent: Mover control: simple_bdi {
 	plan leavePubUnnoticed intention: consumeFood {
 		point awayFromTheftPub <- {0.0, 0.0};
 		
-		loop while: (distance_to(awayFromTheftPub, theftTarget.location)<4.0){
-			awayFromTheftPub <- {rnd(0,float(gridWidth)),rnd(0,float(gridHeight))};
+		loop while: (distance_to(awayFromTheftPub, theftTarget.location) < 4.0) {
+			awayFromTheftPub <- {rnd(0, float(gridWidth)), rnd(0, float(gridHeight))};
 		}
 		
-		do goto target:awayFromTheftPub;
-		if(awayFromTheftPub=location){
+		do goto target: awayFromTheftPub;
+		
+		if(awayFromTheftPub = location) {
 			do remove_belief(hasFood);
 			do remove_intention(consumeFood, true);
 			stolenFoodConsumed <- stolenFoodConsumed + 1;
 		}
 	}
 	
-	
 
-
-	//### REFLEXES
+	// REFLEXES
 	
 	reflex askIfKitchenIsOpen when: inStall and !oneTimeInteractionDone 
 			and targetStall.typeOfStall = typePub {

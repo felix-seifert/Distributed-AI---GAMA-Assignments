@@ -19,7 +19,8 @@ global {
 	int nbPartyLovers <- 20;
 	int nbChillPeople <- 20;
 	int nbCriminals <- 10;
-	int nbHidingSpots <- 1;
+	int nbDustMen <- 10;
+	int nbRecycleStations <- 1;
 	
 	int nbAllMovers <- nbPartyLovers + nbChillPeople + nbCriminals;
 	
@@ -51,16 +52,16 @@ global {
 	
 	
 	//###BDI
-	hidingSpot bestHidingSpot;
+	recycleStation festivalRecycleCenter;
     
     string pubAtLocation <- "pubAtLocation";
     string emptyPubLocation <- "emptyPubLocation";
 
     predicate pubLocation <- new_predicate(pubAtLocation);
     predicate choosePub <- new_predicate("choose a gold pub");
-    predicate hasFood <- new_predicate("extract gold");
-    predicate findFood <- new_predicate("find gold");
-    predicate consumeFood <- new_predicate("sell gold");
+    predicate hasTrash <- new_predicate("extract gold");
+    predicate findTrash <- new_predicate("find gold");
+    predicate bringTrashToRecycle <- new_predicate("sell gold");
     predicate shareInformation <- new_predicate("share information");
     
     emotion joy <- new_emotion("joy");
@@ -91,9 +92,10 @@ global {
 		create PartyLover number: nbPartyLovers;
 		create ChillPerson number: nbChillPeople;
 		create Criminal number: nbCriminals;
+		create DustMan number: nbDustMen;
 		
-		create hidingSpot {
-            bestHidingSpot <- self;    
+		create recycleStation {
+            festivalRecycleCenter <- self;    
         }
 	}
 }
@@ -188,11 +190,12 @@ species Pub parent: Stall {
 	int kitchenClosedCycles <- 50;
 	bool printed <- false;
 	
-	int stealableFood <- rnd(5,10);
+	int trashAccumulated <- rnd(5,10);
 	
 	reflex openKitchen when: !kitchenIsOpen and currentCycle >= kitchenClosedCycles {
 		kitchenIsOpen <- true;
 		currentCycle <- 0;
+		write "Accumulated trash: " + string(trashAccumulated);
 		//write self.name + ' opened kitchen';
 	}
 	
@@ -446,125 +449,8 @@ species ChillPerson parent: Mover {
 	}
 }
 
-species hidingSpot {
-    int stolenFood;
-    aspect default {
-        draw square(5) color: #black ;
-    }
-}
-
-species Criminal parent: Mover control:simple_bdi{
+species Criminal parent: Mover {
 	rgb color <- rgb(75, 75, 180);
-	float sightDistance<-1.0;
-    point target;
-    int stolenFoodCurrentlyHeld;
-    int stolenFoodConsumed;
-    
-    bool use_social_architecture <- true;
-    bool use_emotions_architecture <- true;
-    bool use_personality <- true;
-    
-    //###BDI
-    
-    init {
-        do add_desire(findFood);
-    }
-    
-    perceive target:Criminal in:sightDistance {
-		//write "Socializing";
-    }
-        
-    perceive target: Pub where (each.stealableFood > 0) in: sightDistance {
-        focus id: pubAtLocation var: location;
-        ask myself {
-            if (has_emotion(joy)) {
-                //write self.name + " is joyous";
-                do add_desire(predicate:shareInformation, strength: 5.0);
-            }
-            do remove_intention(findFood, false);
-        }
-    }
-    
-    rule belief: pubLocation new_desire: hasFood strength: 2.0;
-    rule belief: hasFood new_desire: consumeFood strength: 3.0;
-    
-    plan randomMove intention:findFood {
-        do wander;
-    }
-    
-        plan getFood intention:hasFood  {
-        if (target = nil) {
-            do add_subintention(get_current_intention(),choosePub, true);
-            do current_intention_on_hold();
-        } else {
-            do goto target: target ;
-            if (target = location)  {
-                Pub currentPub<- Pub first_with (target = each.location);
-                if currentPub.stealableFood > 0 {
-                     do add_belief(hasFood);
-                     stolenFoodCurrentlyHeld <- stolenFoodCurrentlyHeld + 1;
-                    ask currentPub {stealableFood <- stealableFood - 1;}
-                    
-                    write "#####################################I stole food!";
-                } else {
-                    do add_belief(new_predicate(emptyPubLocation, ["location_value"::target]));
-                }
-                target <- nil;
-            }
-        }    
-    }
-    
-    plan chooseClosestPub intention: choosePub instantaneous: true{
-        list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) collect (point(get_predicate(mental_state (each)).values["location_value"]));
-        list<point> emptyPubs <- get_beliefs_with_name(emptyPubLocation) collect (point(get_predicate(mental_state (each)).values["location_value"]));
-        possiblePubs <- possiblePubs - emptyPubs;
-        if (empty(possiblePubs)) {
-            do remove_intention(hasFood, true); 
-        } else {
-            target <- (possiblePubs with_min_of (each distance_to self)).location;
-        }
-        do remove_intention(choosePub, true);
-    }
-    
-    plan goToHidingSpot intention: consumeFood {
-        do goto target: bestHidingSpot;
-        //write "THIS IS MY LOCATION: " + string(location) + "; THIS IS MY BEST HIDING SPOT: " + string(bestHidingSpot.location);
-        if (bestHidingSpot.location = location)  {
-            do remove_belief(hasFood);
-            do remove_intention(consumeFood, true);
-            write "BRINGING THIS MUCH FOOD: " + stolenFoodCurrentlyHeld;
-            bestHidingSpot.stolenFood <- bestHidingSpot.stolenFood + stolenFoodCurrentlyHeld;
-            stolenFoodConsumed <- stolenFoodCurrentlyHeld;
-            stolenFoodCurrentlyHeld <- 0;
-            write "TOTAL FOOD STOLEN: " + bestHidingSpot.stolenFood;
-        }
-    }
-    
-    
-    plan shareInfrormation intention: shareInformation instantaneous: true{
-        list<Criminal> otherCriminals <- list<Criminal>((social_link_base where (each.liking > 0)) collect each.agent);
-        loop knownPub over: get_beliefs_with_name(pubAtLocation) {
-            ask otherCriminals {
-                do add_belief(knownPub);
-            }
-        }
-        loop knownEmptyPub over: get_beliefs_with_name(emptyPubLocation) {
-            ask otherCriminals {
-                do add_belief(knownEmptyPub);
-            }
-        }
-        
-	
-        
-        do remove_intention(shareInformation, true); 
-    }
-
-    aspect default {
-        draw circle(1) color: color border: #black depth: stolenFoodConsumed;
-    }
-
-    
-    //###OTHER REFLEXES
 	
 	reflex askIfKitchenIsOpen when: inStall and !oneTimeInteractionDone 
 			and targetStall.typeOfStall = typePub {
@@ -597,6 +483,124 @@ species Criminal parent: Mover control:simple_bdi{
 			do leaveStallAction;
 		}
 	}
+}
+
+species recycleStation {
+    int totalTrashCollected;
+    aspect default {
+        draw square(5) color: #black ;
+    }
+}
+
+species DustMan skills: [moving] control:simple_bdi {
+	rgb color <- rgb(235, 255, 255);
+	float sightDistance<-1.0;
+    point target;
+    int trashCurrentlyHeld;
+    int totalTrashCollected;
+    
+    bool use_social_architecture <- true;
+    bool use_emotions_architecture <- true;
+    bool use_personality <- true;
+    
+    //###BDI
+    
+    init {
+        do add_desire(findTrash);
+    }
+    
+    perceive target:DustMan in:sightDistance {
+		//write "Socializing";
+    }
+        
+    perceive target: Pub where (each.trashAccumulated > 0) in: sightDistance {
+        focus id: pubAtLocation var: location;
+        ask myself {
+            if (has_emotion(joy)) {
+                //write self.name + " is joyous";
+                do add_desire(predicate:shareInformation, strength: 5.0);
+            }
+            do remove_intention(findTrash, false);
+        }
+    }
+    
+    rule belief: pubLocation new_desire: hasTrash strength: 2.0;
+    rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;
+    
+    plan randomMove intention:findTrash {
+        do wander;
+    }
+    
+        plan getTrash intention:hasTrash  {
+        if (target = nil) {
+            do add_subintention(get_current_intention(),choosePub, true);
+            do current_intention_on_hold();
+        } else {
+            do goto target: target ;
+            if (target = location)  {
+                Pub currentPub<- Pub first_with (target = each.location);
+                if currentPub.trashAccumulated > 0 {
+                     do add_belief(hasTrash);
+                     trashCurrentlyHeld <- trashCurrentlyHeld + 1;
+                    ask currentPub {trashAccumulated <- trashAccumulated - 1;}
+                    
+                    write "#####################################I collected trash!";
+                } else {
+                    do add_belief(new_predicate(emptyPubLocation, ["location_value"::target]));
+                }
+                target <- nil;
+            }
+        }    
+    }
+    
+    plan chooseClosestPub intention: choosePub instantaneous: true{
+        list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) collect (point(get_predicate(mental_state (each)).values["location_value"]));
+        list<point> emptyPubs <- get_beliefs_with_name(emptyPubLocation) collect (point(get_predicate(mental_state (each)).values["location_value"]));
+        possiblePubs <- possiblePubs - emptyPubs;
+        if (empty(possiblePubs)) {
+            do remove_intention(hasTrash, true); 
+        } else {
+            target <- (possiblePubs with_min_of (each distance_to self)).location;
+        }
+        do remove_intention(choosePub, true);
+    }
+    
+    plan goToRecycleStation intention: bringTrashToRecycle {
+        do goto target: festivalRecycleCenter;
+        //write "THIS IS MY LOCATION: " + string(location) + "; THIS IS MY BEST HIDING SPOT: " + string(festivalRecycleCenter.location);
+        if (festivalRecycleCenter.location = location)  {
+            do remove_belief(hasTrash);
+            do remove_intention(bringTrashToRecycle, true);
+            write "BRINGING THIS MUCH TRASH: " + trashCurrentlyHeld;
+            festivalRecycleCenter.totalTrashCollected <- festivalRecycleCenter.totalTrashCollected + trashCurrentlyHeld;
+            totalTrashCollected <- trashCurrentlyHeld;
+            trashCurrentlyHeld <- 0;
+            write "TOTAL RRASH HOLD: " + festivalRecycleCenter.totalTrashCollected;
+        }
+    }
+    
+    
+    plan shareInfrormation intention: shareInformation instantaneous: true{
+        list<DustMan> otherCriminals <- list<DustMan>((social_link_base where (each.liking > 0)) collect each.agent);
+        loop knownPub over: get_beliefs_with_name(pubAtLocation) {
+            ask otherCriminals {
+                do add_belief(knownPub);
+            }
+        }
+        loop knownEmptyPub over: get_beliefs_with_name(emptyPubLocation) {
+            ask otherCriminals {
+                do add_belief(knownEmptyPub);
+            }
+        }
+        
+	
+        
+        do remove_intention(shareInformation, true); 
+    }
+
+    aspect default {
+        draw circle(1) color: color border: #black depth: totalTrashCollected;
+    }
 }
 
 grid Cell width: gridWidth height: gridHeight neighbors: 4 {}
@@ -637,7 +641,8 @@ experiment EnjoyFreeTime type: gui {
 			species PartyLover;
 			species ChillPerson;
 			species Criminal;
-			species hidingSpot;
+			species DustMan;
+			species recycleStation;
 		}
 		display generous_chart {
 			chart 'Global Generosity' type: series {

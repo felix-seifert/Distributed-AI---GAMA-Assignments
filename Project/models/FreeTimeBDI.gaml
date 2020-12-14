@@ -12,14 +12,14 @@ global {
 	int gridWidth <- 10;
 	int gridHeight <- 10;
 	bool displayEntityName <- false;
-	
+
 	int nbPubs <- 2;
 	int nbConcertHalls <- 2;
 	
-	int nbPartyLovers <- 20;
-	int nbChillPeople <- 20;
+	int nbPartyLovers <- 50;
+	int nbChillPeople <- 50;
 	int nbCriminals <- 10;
-	int nbDustMen <- 25;
+	int nbDustBots <- 5;
 	int nbRecycleStations <- 1;
 	
 	int nbAllMovers <- nbPartyLovers + nbChillPeople + nbCriminals;
@@ -50,6 +50,8 @@ global {
 	int nbDrinkInvitations <- 0;
 	float globalGenerous <- 0.0;
 	
+	emotion joy <- new_emotion("joy");
+	
 	
 	//###BDI
 	recycleStation festivalRecycleCenter;
@@ -58,12 +60,11 @@ global {
     string emptyPubLocation <- "emptyPubLocation";
 
     predicate pubLocation <- new_predicate(pubAtLocation);
-    predicate choosePub <- new_predicate("choose a gold pub");
-    predicate hasTrash <- new_predicate("extract gold");
-    predicate findTrash <- new_predicate("find gold");
+    predicate choosePub <- new_predicate("choose a pub");
+    predicate hasTrash <- new_predicate("extract trash");
+    predicate findTrash <- new_predicate("find trash");
     predicate bringTrashToRecycle <- new_predicate("bring trash to recycle");
     predicate shareInformation <- new_predicate("share information");
-    predicate askForInformation <- new_predicate("ask for information");
 
     
     float thresholdLaw <- 4.0;
@@ -101,7 +102,7 @@ global {
 		create PartyLover number: nbPartyLovers;
 		create ChillPerson number: nbChillPeople;
 		create Criminal number: nbCriminals;
-		create DustMan number: nbDustMen;
+		create DustBot number: nbDustBots;
 		
 		create recycleStation {
             festivalRecycleCenter <- self;
@@ -221,7 +222,7 @@ species Pub parent: Stall {
 			list<unknown> c <- q.contents;
 			
 			if(c[0] = inquireKitchenMsg) {
-				trashAccumulated <- trashAccumulated + rnd(0,1);
+				trashAccumulated <- trashAccumulated + rnd(1,3);
 				do query message: q contents: [informAboutKitchenMsg, kitchenIsOpen];
 			}
 		}
@@ -507,15 +508,18 @@ species recycleStation {
     }
 }
 
-species DustMan skills: [moving] control:simple_bdi {
+species DustBot skills: [moving] control:simple_bdi {
 	rgb color <- rgb(235, 255, 255);
-	float sightDistance<-300.0;
+	float sightDistance<-150.0;
     point target;
     int trashCurrentlyHeld;
     int totalTrashCollected;
-    int trashCapacity <- 10;
+    int trashCapacity <- 5;
+    list<point> knownPubLocations <- [];
     
     bool use_social_architecture <- true;
+    bool use_emotions_architecture <- true;
+    bool use_personality <- true;
     
     float reputation <- 0.0;
     
@@ -524,29 +528,29 @@ species DustMan skills: [moving] control:simple_bdi {
     init {
         do add_desire(findTrash);
     }
+    
+    perceive target:DustBot in:sightDistance-1 {
+		do add_desire(predicate:shareInformation, strength: 5.0);
+    }
         
     perceive target: Pub where (each.trashAccumulated > 0) in: sightDistance {
         focus id: pubAtLocation var: location;
         ask myself {
-            //write self.name + " is joyous";
-            do add_desire(predicate:shareInformation, strength: 5.0);
+            if (has_emotion(joy)) {
+                //write self.name + " is joyous";
+                do add_desire(predicate:shareInformation, strength: 5.0);
+            }
             do remove_intention(findTrash, false);
         }
     }
     
-    perceive target: Pub where (each.trashAccumulated <= 0) in: sightDistance {
-        focus id: pubAtLocation var: location;
-        ask myself {
-            //write self.name + " is joyous";
-            do add_desire(predicate:shareInformation, strength: 2.0);
-        }
-    }
-    
-    rule belief: pubLocation new_desire: hasTrash strength: 4.0;
+    rule belief: pubLocation new_desire: hasTrash strength: 2.0;
     rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;
     
     plan randomMove intention:findTrash {
-        do wander;
+    	do wander;
+        target <- one_of(knownPubLocations);
+        do goto target: target;
     }
     
         plan getTrash intention:hasTrash  {
@@ -575,6 +579,7 @@ species DustMan skills: [moving] control:simple_bdi {
     
     plan chooseClosestPub intention: choosePub instantaneous: true{
         list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) collect (point(get_predicate(mental_state (each)).values["location_value"]));
+        add possiblePubs[rnd(0,length(possiblePubs)-1)] to: knownPubLocations;
         list<point> emptyPubs <- get_beliefs_with_name(emptyPubLocation) collect (point(get_predicate(mental_state (each)).values["location_value"]));
         possiblePubs <- possiblePubs - emptyPubs;
         if (empty(possiblePubs)) {
@@ -595,22 +600,20 @@ species DustMan skills: [moving] control:simple_bdi {
             festivalRecycleCenter.totalTrashCollected <- festivalRecycleCenter.totalTrashCollected + trashCurrentlyHeld;
             totalTrashCollected <- trashCurrentlyHeld;
             trashCurrentlyHeld <- 0;
-            write "TOTAL RRASH HOLD: " + festivalRecycleCenter.totalTrashCollected;
+            write "TOTAL TRASH HOLD: " + festivalRecycleCenter.totalTrashCollected;
         }
     }
     
     
     plan shareInfrormation intention: shareInformation instantaneous: true{
-        list<DustMan> otherDustMen <- list(DustMan);
-        list<DustMan> respectableDustMen <- otherDustMen where (each.reputation>self.reputation);
-        
+        list<DustBot> otherCriminals <- list<DustBot>((social_link_base where (each.liking > 0)) collect each.agent);
         loop knownPub over: get_beliefs_with_name(pubAtLocation) {
-            ask otherDustMen {
+            ask otherCriminals {
                 do add_belief(knownPub);
             }
         }
         loop knownEmptyPub over: get_beliefs_with_name(emptyPubLocation) {
-            ask otherDustMen {
+            ask otherCriminals {
                 do add_belief(knownEmptyPub);
             }
         }
@@ -619,7 +622,7 @@ species DustMan skills: [moving] control:simple_bdi {
     }
 
     aspect default {
-        draw circle(trashCurrentlyHeld/5 + 1) color: color border: #black depth: totalTrashCollected;
+        draw circle(trashCurrentlyHeld/3 + 1) color: color border: #black depth: totalTrashCollected;
     }
 }
 
@@ -662,7 +665,7 @@ experiment EnjoyFreeTime type: gui {
 			species PartyLover;
 			species ChillPerson;
 			species Criminal;
-			species DustMan;
+			species DustBot;
 			species recycleStation;
 		}		
 		
@@ -671,14 +674,14 @@ experiment EnjoyFreeTime type: gui {
 				loop p over:list(Pub){
 				data p.name value: p.trashAccumulated;
 				}
-				data 'Communication Index' value: communicationIndex/1000 color: #blue;
+				data 'Communication Index' value: communicationIndex/100 color: #blue;
 			}
 			
 		}
 		
 		display reputationChart {
 			chart 'Reputation' type: series {
-				loop element over: list(DustMan){
+				loop element over: list(DustBot){
 					data element.name value: element.trashCurrentlyHeld;
 				}
 			}

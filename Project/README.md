@@ -175,3 +175,10 @@ Here (DustBot2 PCI, Grey line), in comparison with the previous graph (DustBot2 
 If the 'sightDistance' is decreased, DustBot will find more difficult to collect Trash from Pubs. Simulations of this possibility create a big amount of Trash at the beginning, until the Pub is discovered. A solution can be applying an increasing 'sightDistance' that is proportional to the total Trash in the Festival. This would allow, in case some Trash accumulates in a hidden part of the Map, to let this Pubs to be discovered.
 
 ## Reinforcement Learning
+
+PartyLovers are now implemented with a random music taste change through `reflex considerNewMusicGenre`.
+The ConcertHalls are now implemented with a trend following algorithm.
+Through time, PartyLovers will move their preference to different music genres, as so will do the ConcertHalls.
+
+`int changeMusicTasteThreshold <- 92;` Represent the probability, for every PartyLover, not to change its music tastes at every step. This parameters can be changed during execution.
+

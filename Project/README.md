@@ -77,6 +77,10 @@ The first rule explain that if there's a belief about a Pub location (not empty 
 
 Since the communication among these agents can be faulty, they are provided with a simple individual memory of the known Pub locations. When a DustBot is in 'wander' state, he will then reach one of the known Pubs to check what's its Trash status.
 
-When 
+The plan 'chooseClosestPub' evaluate which Pub is not empty and select the closest one as target. In this process, the memory will be updated with the knowledge of the closest Pub identified.
+
+The plan 'getTrash' set the subintention to 'choosePub' in case a target it's missing, forcing the DustBot to operate. Else, if a target Pub is selected, the 'do goto target:target' moves the DustBot to the target location. Once there, it can either pick an amount of Trash equal to it's capacity ('trashCapacity') or the residual Trash if the Trash in the Pub ('trashAccumulated') is smaller then the DustBot capacity (e.g.: 13->8->3->0).
+
+
 
 ## Reinforcement Learning

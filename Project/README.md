@@ -108,7 +108,7 @@ This is a balanced setting, as there are no overlapping of Stalls or isolated St
 
 If a Pub is unseen, Trash will be accumulated.
 
-<img src="https://user-images.githubusercontent.com/36768662/102253479-a75ad180-3f07-11eb-8bcf-41ffd5f0a75f.png">
+<img src="https://user-images.githubusercontent.com/36768662/102253487-a9bd2b80-3f07-11eb-8898-2e2417fc87e3.png">
 
 The second image shows how much Trash is accumulated in each Pub (Red and Blue lines) through the time. After the 1200th cycle of execution, the DustBots discovers the Trash in the Pub and start to clean it. Once the Pub is empty of Trash, the DustBots can keep the whole Festival Trash value under control.
 

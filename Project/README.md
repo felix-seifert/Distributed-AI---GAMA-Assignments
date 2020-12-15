@@ -68,20 +68,20 @@ The DustBot are provided with the skill `simple_bdì`, that allow them to use Be
 
 The initialization of each of these DustBots begins with adding the desire to find Trash (`findTrash`).
 
-They are able to perceive two targets: other DustBots and Pubs. When another DustBot is perceived, the desire to share information (`shareInformation`) is set with a strenght of 5.0. Otherwise when a Pub is perceived and if it's not empty (`each.trashAccumulated > 0`) and inside the sight distance (`sightDistance`), the joy emotion will be triggered. Once a DustBot is joyous, the desire to share information (`shareInformation`) is set with a strenght of 5.0. The plan `shareInformation` will be explained after.
+They are able to perceive two targets: other DustBots and Pubs. When another DustBot is perceived, the desire to share information (`shareInformation`) is set with a strenght of 5.0. Otherwise when a Pub is perceived and if it`s not empty (`each.trashAccumulated > 0`) and inside the sight distance (`sightDistance`), the joy emotion will be triggered. Once a DustBot is joyous, the desire to share information (`shareInformation`) is set with a strenght of 5.0. The plan `shareInformation` will be explained after.
 
 In this case, since trash has been found, the intention to find it is removed (`remove_intention(findTrash, false)`).
 
 In order to establish a hierarchy in the possible actions, we set two rules:
 `rule belief: pubLocation new_desire: hasTrash strength: 2.0;`
 `rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;`
-The first rule explain that if there's a belief about a Pub location (not empty of trash), then trash can be found there; the second one allows the DustBot to bring Trash to recycle after Trash has been collected.
+The first rule explain that if there`s a belief about a Pub location (not empty of trash), then trash can be found there; the second one allows the DustBot to bring Trash to recycle after Trash has been collected.
 
-Since the communication among these agents can be faulty, they are provided with a simple individual memory of the known Pub locations. When a DustBot is in `wander` state, he will then reach one of the known Pubs to check what's its Trash status.
+Since the communication among these agents can be faulty, they are provided with a simple individual memory of the known Pub locations. When a DustBot is in `wander` state, he will then reach one of the known Pubs to check what`s its Trash status.
 
 The plan `chooseClosestPub` evaluate which Pub is not empty and select the closest one as target. In this process, the memory will be updated with the knowledge of the closest Pub identified.
 
-The plan `getTrash` set the subintention to `choosePub` in case a target it's missing, forcing the DustBot to operate. Else, if a target Pub is selected, the `do goto target:target` moves the DustBot to the target location. Once there, it can either pick an amount of Trash equal to its capacity (`trashCapacity`) or the residual Trash if the Trash in the Pub (`trashAccumulated`) is smaller then the DustBot capacity (e.g.: 13->8->3->0).
+The plan `getTrash` set the subintention to `choosePub` in case a target it`s missing, forcing the DustBot to operate. Else, if a target Pub is selected, the `do goto target:target` moves the DustBot to the target location. Once there, it can either pick an amount of Trash equal to it`s capacity (`trashCapacity`) or the residual Trash if the Trash in the Pub (`trashAccumulated`) is smaller then the DustBot capacity (e.g.: 13->8->3->0).
 
 Once the maximum Trash capacity of the DustBot (`trashCapacity`) is achieved, the DustBot enter the plan `goToRecycleStation`, as the `rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;` commands.
 
@@ -104,7 +104,7 @@ Here is a simulation of the experiment:
 The first image represents the map of the simulation with the different species and processes already explained previously.
 The white agents are the DustBots: the bigger the DustBot, the more the quantity of Trash currently held (`trashCurrentlyHeld`).
 
-This is a balanced setting, as there are no overlapping of Stalls or isolated Stalls. It may happen that the DustBots won't be able to see a Pub far away if the sight distance (`sightDistance`) isn't set properly high enough.
+This is a balanced setting, as there are no overlapping of Stalls or isolated Stalls. It may happen that the DustBots won`t be able to see a Pub far away if the sight distance (`sightDistance`) isn`t set properly high enough.
 
 If a Pub is unseen, Trash will be accumulated.
 
@@ -112,7 +112,7 @@ If a Pub is unseen, Trash will be accumulated.
 
 The second image shows how much Trash is accumulated in each Pub (Red and Blue lines) through the time. After the 1200th cycle of execution, the DustBots discovers the Trash in the Pub and start to clean it. Once the Pub is empty of Trash, the DustBots can keep the whole Festival Trash value under control.
 
-The Blue line represent the second Pub accumulated Trash: it's possible to see that now and then Trash appears, but it is instantly collected by the DustBot. The same behavior will follow after the 5000th cycle for the first Pub (Red line).
+The Blue line represent the second Pub accumulated Trash: it`s possible to see that now and then Trash appears, but it is instantly collected by the DustBot. The same behavior will follow after the 5000th cycle for the first Pub (Red line).
 
 Even though in this image is not noticeable, in this graph is also represented the general Communication Index (`communicationIndex`) as a Green line. It is increased by 1 everytime a communication among the DustBots happens, but it is represented divided by 1000 as it explodes in the value through time.
 
@@ -135,6 +135,8 @@ As regards how each DustBot performed:
 
 With the same color are represented the total Trash collected by one DustBot and its individual Communication Index (`personalCommunicationIndex`). To be more precise, the 3 higher lines represents the total Trash collected by the DustBots, while the lower ones the corresponding Communication Index. The personal Communication Index are shown divided by 10, as their value explodes through time.
 
-Here (DustBot2 PCI, Grey line), in comparison with the previous graph (DustBot2 Trash currently held, Green line), confirm that the first Trash collection for DustBot2 happened around the 1000th cycle. This happened because it wasn't able to communicate with the other DustBots, as it's shown in its low PCI (`personalCommunicationIndex`).
+Here (DustBot2 PCI, Grey line), in comparison with the previous graph (DustBot2 Trash currently held, Green line), confirm that the first Trash collection for DustBot2 happened around the 1000th cycle. This happened because it wasn`t able to communicate with the other DustBots, as it`s shown in its low PCI (`personalCommunicationIndex`), due to the distance.
+
+If the 'sightDistance' is decreased, DustBot will find more difficult to collect Trash from Pubs. Simulations of this possibility create a big amount of Trash at the beginning, until the Pub is discovered. A solution can be applying an increasing 'sightDistance' that is proportional to the total Trash in the Festival. This would allow, in case some Trash accumulates in a hidden part of the Map, to let this Pubs to be discovered.
 
 ## Reinforcement Learning

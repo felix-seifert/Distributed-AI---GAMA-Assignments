@@ -133,7 +133,7 @@ As regards how each DustBot performed:
 
 <img src="https://user-images.githubusercontent.com/36768662/102253484-a9249500-3f07-11eb-8fd7-84778188e0b1.png">
 
-With the same color are represented the total Trash collected by one DustBot and its individual Communication Index ('personalCommunicationIndex'). To be more precise, the 3 higher lines represents the total Trash collected by the DustBots, while the lower ones the corresponding Communication Index.
+With the same color are represented the total Trash collected by one DustBot and its individual Communication Index ('personalCommunicationIndex'). To be more precise, the 3 higher lines represents the total Trash collected by the DustBots, while the lower ones the corresponding Communication Index. The personal Communication Index are shown divided by 10, as their value explodes through time.
 
 Here (DustBot2 PCI, Grey line), in comparison with the previous graph (DustBot2 Trash currently held, Green line), confirm that the first Trash collection for DustBot2 happened around the 1000th cycle. This happened because it wasn't able to communicate with the other DustBots, as it's shown in its low PCI ('personalCommunicationIndex').
 

@@ -221,7 +221,7 @@ The total number of token `totalCount` is calculated by summing all the tokens c
 
 `probabilities` contains a vector with the same number of elements, but each of the value is the probability of choosing the corresponding musicGenre for the next concert.
 
-`probabilityPerturbations` is the perturbation vector we apply to the `probabilities` one. It's used in the code to avoid fashions that might break the algorithm. The value of a musicGenre on fashion exceed is lowered, while a rising musicGenre is encouraged.
+`probabilityPerturbations` is the perturbation vector we apply to the `probabilities` one. It's used in the code to avoid fashions that might break the algorithm. The value of a musicGenre on fashion exceed is lowered, while a rising musicGenre is encouraged. 
 
 `probabilitiesAfterPerturbation` is the sum of the two vectors before. From this vector, the maximum value (probability+perturbation) is choosen as elected musicGenre.
 

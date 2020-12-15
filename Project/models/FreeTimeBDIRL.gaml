@@ -1,6 +1,8 @@
 /**
 * Name: FreeTime
-* Model which simulates different humanoid entities who spend their free time and interact with each other 
+* Model which simulates different humanoid entities who spend their free time and interact with each other.
+* BDI: DustBots collect Trash around the map, communicating among them about the Trash quantities of the Pub.
+* RL: ConcertHalls interact with PartyLovers to discover music tastes to adapt MusicGenre for next concert.
 * Author: Marco Molinari <molinarimarco8@gmail.com>, Felix Seifert <mail@felix-seifert.com>
 */
 
@@ -115,9 +117,7 @@ species Stall skills: [fipa] {
 	geometry area <- rectangle(size, size);
 	
 	string typeOfStall <- nil;
-	
 	list<Mover> guests <- [];
-	
 	int currentCycle <- 0;
 	
 	reflex handleRequests when: !empty(requests) {
@@ -202,7 +202,7 @@ species Pub parent: Stall {
 	reflex openKitchen when: !kitchenIsOpen and currentCycle >= kitchenClosedCycles {
 		kitchenIsOpen <- true;
 		currentCycle <- 0;
-		//write "@@@@@@@@@@@@@@@Accumulated trash: " + string(trashAccumulated);
+		//write self.name + " Accumulated trash: " + string(trashAccumulated);
 		//write self.name + ' opened kitchen';
 	}
 	
@@ -229,16 +229,15 @@ species ConcertHall parent: Stall {
 	image_file icon <- image_file("../includes/data/concert-hall.png");
 	
 	string typeOfStall <- typeConcertHall;
-	
 	int concertCycles <- 70;
 	string currentConcertGenre <- any(musicGenres);
 	
+	//###RL
 	list<PartyLover> knownPartyLovers <- [];
 	list<string> musicTasteDistribution <- [];
 	list<int> musicTasteCount <- [0,0,0,0,0];
 	int totalCount <- 0;
 	list<float>probabilities <- [0.0,0.0,0.0,0.0,0.0];
-	//	list<string> musicGenres <- ['Rock', 'Metal', 'Blues', 'Funk', 'Hip Hop'];
 	list<float>probabilityPerturbations <- [0.0,0.0,0.0,0.0,0.0];
 	list<float>probabilitiesAfterPerturbation <- [0.0,0.0,0.0,0.0,0.0];
 	string electedConcertGenre <- "";
@@ -273,8 +272,7 @@ species ConcertHall parent: Stall {
 			probabilities[mg] <- musicTasteCount[mg]/totalCount;
 		}
 		
-		write "probabilities: " + string(probabilities);
-		
+		//write "probabilities: " + string(probabilities);
 		loop p from: 0 to: length(probabilities)-1{
 			probabilitiesAfterPerturbation[p] <- probabilities[p] + probabilityPerturbations[p];
 		}
@@ -296,12 +294,11 @@ species ConcertHall parent: Stall {
 			choosenConcertGenre <- electedConcertGenre;
 			probabilityPerturbations[probabilities index_of max(probabilities)] <- probabilityPerturbations[probabilities index_of max(probabilities)] + 0.2;
 		}
-		
 		write "probabilityPerturbations: " + string(probabilityPerturbations);
 		
 	}
 	
-	
+	//###BASE	
 	reflex startNewConcert when: currentCycle > concertCycles {
 		currentCycle <- 0;
 		currentConcertGenre <- choosenConcertGenre;
@@ -309,7 +306,6 @@ species ConcertHall parent: Stall {
 	}
 	
 	reflex informAboutMusicGenre when: !empty(queries) {
-		
 		loop q over: queries {
 			list<unknown> c <- q.contents;
 			if !(q.sender in knownPartyLovers){
@@ -319,7 +315,6 @@ species ConcertHall parent: Stall {
 				do query message: q contents: [informAboutGenreMsg, currentConcertGenre];
 			}
 		}
-		
 		do updateMusicPlanning;
 	}
 }
@@ -364,7 +359,7 @@ species Mover skills: [moving, fipa] {
 	
 	reflex receivePlaceInStall when: targetStall != nil and targetPlace = nil 
 			and !inStall and !empty(informs) {
-		
+				
 		loop i over: informs {
 			list<unknown> c <- i.contents;
 			
@@ -376,7 +371,6 @@ species Mover skills: [moving, fipa] {
 	
 	reflex enterStall when: targetPlace != nil and !inStall 
 			and self.location = targetPlace {
-		
 		do start_conversation to: [targetStall] performative: 'subscribe' 
 				contents: [enterStallMsg];
 				
@@ -392,16 +386,10 @@ species Mover skills: [moving, fipa] {
 	
 	reflex leaveStall when: inStall and cyclesInStall > cyclesInStallMin 
 			and rnd(1.0) <= chanceToLeaveStall {
-		
 		do leaveStallAction;
 	}
 	
 	action leaveStallAction {
-		
-		ask targetStall{
-			
-		}
-		
 		do start_conversation to: [targetStall] performative: 'subscribe' 
 				contents: [leaveStallMsg];
 						
@@ -411,7 +399,6 @@ species Mover skills: [moving, fipa] {
 	}
 	
 	reflex inviteForDrinkOption when: inStall and !inviteForDrinkOptionChecked {
-		
 		bool generousEnough <- generous > valueForGenerousEnough;
 		bool invite <- rnd(1.0) <= chanceToInviteSomeoneForDrink;
 		
@@ -424,7 +411,6 @@ species Mover skills: [moving, fipa] {
 	}
 	
 	reflex acceptDrinkInvitation when: !empty(proposes) {
-		
 		loop p over: proposes {
 			list<unknown> c <- p.contents;
 			
@@ -439,7 +425,6 @@ species Mover skills: [moving, fipa] {
 	
 	aspect default {
 		draw circle(size) color: color;
-		
 		if(displayEntityName) {
 			draw name color: #black;
 		}
@@ -448,12 +433,13 @@ species Mover skills: [moving, fipa] {
 
 species PartyLover parent: Mover {
 	rgb color <- rgb(220, 120, 50);
-	
 	float noisy <- rnd(0.3, 1.0);
-	int changeMusicTaste <- rnd(0, 100);
-	
 	list<string> favouriteMusicGenres <- [any(musicGenres), any(musicGenres)];
 	
+	//###RL
+	int changeMusicTaste <- rnd(0, 100);
+	
+	//###BASE
 	reflex considerNewMusicGenre when: changeMusicTaste>changeMusicTasteThreshold{
 		favouriteMusicGenres[rnd(1)] <- any(musicGenres);
 	}
@@ -468,7 +454,6 @@ species PartyLover parent: Mover {
 	}
 	
 	reflex reactOnMusicGenre when: inStall and !empty(queries) {
-		
 		loop q over: queries {
 			list<unknown> c <- q.contents;
 			
@@ -481,14 +466,11 @@ species PartyLover parent: Mover {
 	action leaveStallIfMusicIsBad(string receivedMusicGenre) {
 		
 		//write self.name + ' received the music genre ' + receivedMusicGenre;
-		
 		bool likeReceivedGenre <- favouriteMusicGenres contains receivedMusicGenre;
 		bool generousEnoughToStay <- rnd(0.6) <= generous;
 		
 		if(!likeReceivedGenre and !generousEnoughToStay) {
-			
 			//write self.name + ' does not like music in ' + targetStall.name + ' and left';
-			
 			do leaveStallAction;
 		}
 	}
@@ -496,21 +478,16 @@ species PartyLover parent: Mover {
 
 species ChillPerson parent: Mover {
 	rgb color <- rgb(120, 120, 120);
-	
 	float generous <- rnd(0.3, 1.0);
-	
 	float maximumAcceptedNoiseLevel <- 0.4;
 	
 	reflex askForFellowGuests when: inStall and !oneTimeInteractionDone {
-		
 		do start_conversation to: [targetStall] performative: 'request'
 				contents: [askForGuestsMsg];
-		
 		oneTimeInteractionDone <- true;
 	}
 	
 	reflex reactOnFellowGuests when: inStall and !empty(informs) {
-		
 		loop i over: informs {
 			list<unknown> c <- i.contents;
 			
@@ -527,13 +504,10 @@ species ChillPerson parent: Mover {
 		loop g over: guests {
 			noiseLevel <- noiseLevel + g.noisy;
 		}
-		
 		noiseLevel <- noiseLevel / length(guests);
 		
 		if(noiseLevel > maximumAcceptedNoiseLevel) {
-			
 			//write self.name + ' finds it too noisy in ' + targetStall.name + ' and left';
-			
 			do leaveStallAction;
 		}
 	}
@@ -583,6 +557,7 @@ species recycleStation {
 }
 
 species DustBot skills: [moving] control:simple_bdi {
+	//###BDI
 	rgb color <- rgb(235, 255, 255);
 	float sightDistance<-50.0;
     point target;
@@ -606,8 +581,6 @@ species DustBot skills: [moving] control:simple_bdi {
     
     int personalCommunicationIndex <- 0;
     
-    //###BDI
-    
     init {
         do add_desire(findTrash);
     }
@@ -620,7 +593,6 @@ species DustBot skills: [moving] control:simple_bdi {
         focus id: pubAtLocation var: location;
         ask myself {
             if (has_emotion(joy)) {
-                //write self.name + " is joyous";
                 do add_desire(predicate:shareInformation, strength: 5.0);
             }
             do remove_intention(findTrash, false);
@@ -663,9 +635,9 @@ species DustBot skills: [moving] control:simple_bdi {
                      	myself.trashCurrentlyHeld <- myself.trashCurrentlyHeld + min(myself.trashCapacity, trashAccumulated);
                      	trashAccumulated <- max(0, trashAccumulated - myself.trashCapacity);
                      }     
-                    //write "#####################################I collected trash!";
+                    //write self.name + " I collected trash!";
                 } else if trashCurrentlyHeld=trashCapacity{
-               		//write "My bag is full!";
+               		//write self.name + " My bag is full!";
                 }
                 else {
                 	do add_belief(new_predicate(emptyPubLocation, ["location_value"::target]));
@@ -677,7 +649,6 @@ species DustBot skills: [moving] control:simple_bdi {
     
     plan goToRecycleStation intention: bringTrashToRecycle {
         do goto target: festivalRecycleCenter;
-        //write "THIS IS MY LOCATION: " + string(location) + "; THIS IS MY BEST HIDING SPOT: " + string(festivalRecycleCenter.location);
         if (festivalRecycleCenter.location = location)  {
             do remove_belief(hasTrash);
             do remove_intention(bringTrashToRecycle, true);
@@ -688,7 +659,6 @@ species DustBot skills: [moving] control:simple_bdi {
             //write "TOTAL TRASH HOLD: " + festivalRecycleCenter.totalTrashCollected;
         }
     }
-    
     
     plan shareInfrormation intention: shareInformation instantaneous: true{
 		list<DustBot> otherDustBots <- list(DustBot);
@@ -704,7 +674,6 @@ species DustBot skills: [moving] control:simple_bdi {
         }
         
         personalCommunicationIndex <- personalCommunicationIndex + 1;
-        
         communicationIndex <- communicationIndex + 1;
         do remove_intention(shareInformation, true); 
     }
@@ -735,6 +704,10 @@ experiment EnjoyFreeTime type: gui {
 			category: "Number of Movers";
 	parameter "Number of Criminals: " var: nbCriminals min: 10 max: 20 
 			category: "Number of Movers";
+	parameter "Number of DustBots: " var: nbDustBots min: 0 max: 10 
+			category: "Number of Movers";
+	parameter "Number of Criminals: " var: nbCriminals min: 10 max: 20 
+			category: "Number of Movers";
 			
 	parameter "Minimum Generosity to Invite for Drink: " var: valueForGenerousEnough min: 0.1 max: 1.0 
 			category: "Invitation for Drinks";
@@ -742,14 +715,16 @@ experiment EnjoyFreeTime type: gui {
 			category: "Invitation for Drinks";
 	parameter "Increment of Generosity after Drink Invitation: " var: incrementGenerous min: 0.005 max: 0.1 
 			category: "Invitation for Drinks";
-	
+			
+	parameter "Change Music Taste Threshold" var: changeMusicTasteThreshold min: 0 max: 100 
+			category: "Reinforcement Learning";		
+
 	output {
 		display main_display {
 			grid Cell lines: #lightgrey;
 			
 			species Pub;
 			species ConcertHall;
-			
 			species PartyLover;
 			species ChillPerson;
 			species Criminal;
@@ -757,9 +732,46 @@ experiment EnjoyFreeTime type: gui {
 			species recycleStation;
 		}		
 		
+		display generous_chart {
+			chart 'Global Generosity' type: series {
+				data 'Global Generosity' value: globalGenerous color: #red;
+			}
+		}
+		
+		display drink_invitations {
+			chart 'Drink Invitations' type: series {
+				data 'Number Drink Invitations' value: nbDrinkInvitations color: #blue;
+			}
+		}
+				
+		display trashChartBDI {
+			chart 'Global Trash' type: series {
+				loop p over:list(Pub){
+				data p.name value: p.trashAccumulated;
+				}
+				data 'Communication Index' value: communicationIndex/10 color: #green;
+			}
+		}
+		
+		display trashCurrentlyHeldChartBDI {
+			chart 'Trash Currently Held' type: series {
+				loop element over: list(DustBot){
+					data element.name value: element.trashCurrentlyHeld;
+				}
+			}
+		}
+		
+		display totalTrashChartBDI {
+			chart 'Total Trash Chart' type: series {
+				loop element over: list(DustBot){
+					color <- rnd_color(100,255);
+					data element.name value: element.totalTrashCollected color:color;
+					data element.name+" PCI: "+string(element.personalCommunicationIndex) value: element.personalCommunicationIndex/10 color:color;
+				}
+			}
+		}
 		
 		display ConcertHall0MusicTastes {
-			
 			chart "ConcertHall0MusicTastes" type: pie {
 				ConcertHall ch <- list(ConcertHall)[0];
         		data 'Rock' value: ch.musicTasteCount[0];
@@ -780,52 +792,5 @@ experiment EnjoyFreeTime type: gui {
         		data 'Hip Hop' value: ch.musicTasteCount[4];
 	        }
 		}
-		
-    	
-		//	list<string> musicGenres <- ['Rock', 'Metal', 'Blues', 'Funk', 'Hip Hop'];
-		
-//		display trashChart {
-//			chart 'Global Trash' type: series {
-//				loop p over:list(Pub){
-//				data p.name value: p.trashAccumulated;
-//				}
-//				data 'Communication Index' value: communicationIndex/10 color: #green;
-//			}
-//			
-//		}
-//		
-//		display trashCurrentlyHeldChart {
-//			chart 'Trash Currently Held' type: series {
-//				loop element over: list(DustBot){
-//					data element.name value: element.trashCurrentlyHeld;
-//				}
-//			}
-//			
-//		}
-//		
-//		display totalTrashChart {
-//			chart 'Total Trash Chart' type: series {
-//				rgb color <- #red;
-//				
-//				loop element over: list(DustBot){
-//					color <- rnd_color(100,255);
-//					data element.name value: element.totalTrashCollected color:color;
-//					data element.name+" PCI: "+string(element.personalCommunicationIndex) value: element.personalCommunicationIndex/10 color:color;
-//				}
-//			}
-//			
-//		}
-//		
-//		display generous_chart {
-//			chart 'Global Generosity' type: series {
-//				data 'Global Generosity' value: globalGenerous color: #red;
-//			}
-//		}
-//		
-//		display drink_invitations {
-//			chart 'Drink Invitations' type: series {
-//				data 'Number Drink Invitations' value: nbDrinkInvitations color: #blue;
-//			}
-//		}
 	}
 }

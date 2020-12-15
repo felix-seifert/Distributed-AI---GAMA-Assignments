@@ -223,10 +223,15 @@ The total number of token `totalCount` is calculated by summing all the tokens c
 
 If the elected musicGenre proposed `electedConcertGenre` is a new one, the perturbation is cancelled on that musicGenre. Otherwhise, it will increase the negative perturbation.
 
-Even though this Reinforcement Learning module is a simple process, the choice of the maximum value of `probabilitiesAfterPerturbation` grants the capability to follow the best music trends. For example, if a money value is introduced in the system with a continuous and equal distribution among the agents, this algorithm will be able to maximize the revenues.
+Even though this Reinforcement Learning module is a simple process, the choice of the maximum value of `probabilitiesAfterPerturbation` grants to ConcertHalls the capability to follow the best music trends. For example, if a money value is introduced in the system with a continuous and equal distribution among the agents, this algorithm will be able to maximize the revenues.
+
+In Reinforcement Learning language:
+The ConcertHall start without knownledge of its environment. It interacts throgh time with PartyLovers while they ask for information about the concert. Everytime there's an interaction, the ConcertHall formulate a new probability distribution of what's the best choice for the next concert. Then, it applies the action of starting the concert with the selected musicGenre. The increase in number of people satisfied with this choice is technically the reward we can convert into revenue.
+
+Even tough movement is not included in the RL implementation, it's possible to imagine the trend as a point that has to be followed by the ConcertHall. This algorithm allows the ConcertHalls to continuously follow the music tastes through the random variation of the PartyLovers tastes.
 
 ## Simulation
 <img src="https://user-images.githubusercontent.com/36768662/102285280-4ac2db00-3f36-11eb-9fcf-31d15cc2a628.gif">
-          
+
           
 <img src="https://user-images.githubusercontent.com/36768662/102285283-4b5b7180-3f36-11eb-9458-2ef8e1d5b77b.gif">

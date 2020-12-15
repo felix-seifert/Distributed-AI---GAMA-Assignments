@@ -180,6 +180,7 @@ PartyLovers are now implemented with a random music taste change through `reflex
 The ConcertHalls are now implemented with a trend following algorithm.
 Through time, PartyLovers will move their preference to different music genres, as so will do the ConcertHalls.
 
+## Agent
 These are the new variables introduced for the `species ConcertHall`:
 
 `int changeMusicTasteThreshold <- 92` Represent the probability, for every PartyLover, not to change its music tastes at every step. This parameters can be changed during execution.
@@ -205,3 +206,22 @@ These are the new variables introduced for the `species ConcertHall`:
 `string previousMusicGenre <- "";` Used to evaluate possible fashions situations
 
 `float maxFashionDecay <- rnd(-0.5,0.0);` To limit Fasion decay
+
+## System
+Only one action (`updateMusicPlanning`) has been added to the base code.
+
+The `knownPartyLovers` are checked for their music tastes: these are added as tokens into `musicTasteDistribution`.
+
+The `musicTasteCount` is of the same length of the musicGenres. For each musicGenre the number of token is calculated.
+The total number of token `totalCount` is calculated by summing all the tokens counted.
+
+`probabilities` contains a vector with the same number of elements, but each of the value is the probability of choosing the corresponding musicGenre for the next concert.
+
+`probabilityPerturbations` is the perturbation vector we apply to the `probabilities` one. It's used in the code to avoid fashions that might break the algorithm. The value of a musicGenre on fashion exceed is lowered, while a rising musicGenre is encouraged.
+
+`probabilitiesAfterPerturbation` is the sum of the two vectors before. From this vector, the maximum value (probability+perturbation) is choosen as elected musicGenre.
+
+If the elected musicGenre proposed `electedConcertGenre` is a new one, the perturbation is cancelled on that musicGenre. Otherwhise, it will increase the negative perturbation.
+
+Even though this Reinforcement Learning module is a simple process, the choice of the maximum value of `probabilitiesAfterPerturbation` grants the capability to follow the best music trends. For example, if a money value is introduced in the system with a continuous and equal distribution among the agents, this algorithm will be able to maximize the revenues.
+

@@ -68,7 +68,9 @@ The DustBot are provided with the skill 'simple_bdì', that allow them to use Be
 
 The initialization of each of these DustBots begins with adding the desire to find Trash ('findTrash').
 
-They are able to perceive two targets: other DustBots and Pubs. When another DustBot is perceived, the desire to share information ('shareInformation') is set with a strenght of 5.0. Otherwise when a Pub is perceived and if it's not empty ('each.trashAccumulated > 0') and inside the sight distance ('sightDistance'), the joy emotion will be triggered. Once a DustBot is joyous, the desire to share information ('shareInformation') is set with a strenght of 5.0. In this case, since trash has been found, the intention to find it is removed ('remove_intention(findTrash, false)').
+They are able to perceive two targets: other DustBots and Pubs. When another DustBot is perceived, the desire to share information ('shareInformation') is set with a strenght of 5.0. Otherwise when a Pub is perceived and if it's not empty ('each.trashAccumulated > 0') and inside the sight distance ('sightDistance'), the joy emotion will be triggered. Once a DustBot is joyous, the desire to share information ('shareInformation') is set with a strenght of 5.0. The plan 'shareInformation' will be explained after.
+
+In this case, since trash has been found, the intention to find it is removed ('remove_intention(findTrash, false)').
 
 In order to establish a hierarchy in the possible actions, we set two rules:
 'rule belief: pubLocation new_desire: hasTrash strength: 2.0;'
@@ -80,6 +82,25 @@ Since the communication among these agents can be faulty, they are provided with
 The plan 'chooseClosestPub' evaluate which Pub is not empty and select the closest one as target. In this process, the memory will be updated with the knowledge of the closest Pub identified.
 
 The plan 'getTrash' set the subintention to 'choosePub' in case a target it's missing, forcing the DustBot to operate. Else, if a target Pub is selected, the 'do goto target:target' moves the DustBot to the target location. Once there, it can either pick an amount of Trash equal to it's capacity ('trashCapacity') or the residual Trash if the Trash in the Pub ('trashAccumulated') is smaller then the DustBot capacity (e.g.: 13->8->3->0).
+
+Once the maximum Trash capacity of the DustBot ('trashCapacity') is achieved, the DustBot enter the plan 'goToRecycleStation', as the 'rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;' commands.
+
+One RecycleCenter ('festivalRecycleCenter') is located in the center of the map to optimize the average distance for any random disposition of the Stalls.
+After imposing the 'goto target:' to 'festivalRecycleCenter', once the location is reached, the DustBot lose the belief of 'hasTrash' and the intention 'bringTrashToRecycle'. The amount of total Trash collected ('festivalRecycleCenter.totalTrashCollected' and 'self.totalTrashCollected') are updated with the amount brought by the DustBot.
+The Trash currently held ('trashCurrentlyHeld') is set to 0. The bot is now going to collect more Thrash.
+
+DustBots have a simple communication plan ('shareInformation'), that let them exchange information about Pubs. More precisely, known Pubs with Trash and known Pubs without Trash. This operation is done by adding a belief ('add_belief') of the specific Pubs ('knownPub' and 'knownEmptyPub').
+
+In order to let the DustBot work, an increasing amount of Trash ('trashAccumulated') is implemented in the Pub specie.
+Everytime a client of the Pub leaves, a random amount of Trash ('rnd(1,5)') is allocated into the Pub.
+This let the mechanics of the Party to interact with the BDI interface: everytime the DustBot identify Trash in a Pub, they take it to the Festival Recycle Center.
+
+A balancing in the number of Guests and DustBots is required in order to keep the Festival empty of Trash.
+
+Here is a simulation of the experiment:
+//1st image
+
+
 
 
 

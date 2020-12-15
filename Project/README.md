@@ -65,23 +65,35 @@ We made an integration for both of the challenges.
 For the BDI integration, we have the DustBots as a group of Agents able to interact with Pubs to collect trash. Once the trash is collected, it is brought to the Festival Recylce Center.
 
 `float sightDistance<-50.0;`
+
 `point target;`
+
 `int trashCurrentlyHeld;`
+
 `int totalTrashCollected;`
+
 `int trashCapacity <- 5;`
+
 `list<point> knownPubLocations <- [];`
 
 `bool use_social_architecture <- true;`
+
 `bool use_emotions_architecture <- true;`
+
 `bool use_personality <- true;`
 
 `float openness <- gauss(0.5,0.12);`
+
 `float conscientiousness <- gauss(0.5,0.12);`
+
 `float extraversion <- gauss(0.5,0.12);`
+
 `float agreeableness <- gauss(0.5,0.12);`
+
 `float neurotism <- gauss(0.5,0.12);`
 
 `float plan_persistence <- 1.0;`
+
 `float intention_persistence <- 1.0;`
 
 `int personalCommunicationIndex <- 0;`

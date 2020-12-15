@@ -98,6 +98,7 @@ This let the mechanics of the Party to interact with the BDI interface: everytim
 A balancing in the number of Guests and DustBots is required in order to keep the Festival empty of Trash.
 
 Here is a simulation of the experiment:
+
 //1st image
 
 The first image represents the map of the simulation with the different species and processes already explained previously.
@@ -116,17 +117,22 @@ The Blue line represent the second Pub accumulated Trash: it's possible to see t
 Even though in this image is not noticeable, in this graph is also represented the general Communication Index ('communicationIndex') as a Green line. It is increased by 1 everytime a communication among the DustBots happens, but it is represented divided by 1000 as it explodes in the value through time.
 
 In the following image a different behavior can be seen:
+
 //3rd image
 
 Here the Red Pub got discovered after 1400 cycles, and as soon as it happens the Communication Index (Green line) increases. The same process happens goes for the Blue Pub at 3000 cycles. After being discovered, they are constantly checked for Trash.
 
 From the same simulation of the first two images:
+
 //4th image
+
 This graph represents the Trash currently held by each DustBot through time. As their maximum capacity is 5 in this simulation, they can't hold more Trash, as shown in the graph.
 The DustBot0 (Red line) wasn't active for the first 1500 cycles, but as soon as the second Pub is discovered, he starts to clean it from the Trash (as noticeable in the first figure).
 
 As regards how each DustBot performed:
+
 //5th image
+
 With the same color are represented the total Trash collected by one DustBot and its individual Communication Index ('personalCommunicationIndex'). To be more precise, the 3 higher lines represents the total Trash collected by the DustBots, while the lower ones the corresponding Communication Index.
 
 Here (DustBot2 PCI, Grey line), in comparison with the previous graph (DustBot2 Trash currently held, Green line), confirm that the first Trash collection for DustBot2 happened around the 1000th cycle. This happened because it wasn't able to communicate with the other DustBots, as it's shown in its low PCI ('personalCommunicationIndex').

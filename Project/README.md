@@ -99,7 +99,7 @@ A balancing in the number of Guests and DustBots is required in order to keep th
 
 Here is a simulation of the experiment:
 
-//1st image
+<img src="https://user-images.githubusercontent.com/36768662/102253483-a9249500-3f07-11eb-96bb-4aaf0faac92d.png">
 
 The first image represents the map of the simulation with the different species and processes already explained previously.
 The white agents are the DustBots: the bigger the DustBot, the more the quantity of Trash currently held ('trashCurrentlyHeld').
@@ -108,7 +108,7 @@ This is a balanced setting, as there are no overlapping of Stalls or isolated St
 
 If a Pub is unseen, Trash will be accumulated.
 
-//2nd image
+<img src="https://user-images.githubusercontent.com/36768662/102253479-a75ad180-3f07-11eb-8bcf-41ffd5f0a75f.png">
 
 The second image shows how much Trash is accumulated in each Pub (Red and Blue lines) through the time. After the 1200th cycle of execution, the DustBots discovers the Trash in the Pub and start to clean it. Once the Pub is empty of Trash, the DustBots can keep the whole Festival Trash value under control.
 
@@ -116,22 +116,22 @@ The Blue line represent the second Pub accumulated Trash: it's possible to see t
 
 Even though in this image is not noticeable, in this graph is also represented the general Communication Index ('communicationIndex') as a Green line. It is increased by 1 everytime a communication among the DustBots happens, but it is represented divided by 1000 as it explodes in the value through time.
 
-In the following image a different behavior can be seen:
+In the following image a different behavior from another execution of the same experiment can be seen:
 
-//3rd image
+<img src="https://user-images.githubusercontent.com/36768662/102253479-a75ad180-3f07-11eb-8bcf-41ffd5f0a75f.png">
 
 Here the Red Pub got discovered after 1400 cycles, and as soon as it happens the Communication Index (Green line) increases. The same process happens goes for the Blue Pub at 3000 cycles. After being discovered, they are constantly checked for Trash.
 
 From the same simulation of the first two images:
 
-//4th image
+<img src="https://user-images.githubusercontent.com/36768662/102253489-aa55c200-3f07-11eb-8fc5-7bfc1a3b112d.png">
 
 This graph represents the Trash currently held by each DustBot through time. As their maximum capacity is 5 in this simulation, they can't hold more Trash, as shown in the graph.
 The DustBot0 (Red line) wasn't active for the first 1500 cycles, but as soon as the second Pub is discovered, he starts to clean it from the Trash (as noticeable in the first figure).
 
 As regards how each DustBot performed:
 
-//5th image
+<img src="https://user-images.githubusercontent.com/36768662/102253484-a9249500-3f07-11eb-8fd7-84778188e0b1.png>
 
 With the same color are represented the total Trash collected by one DustBot and its individual Communication Index ('personalCommunicationIndex'). To be more precise, the 3 higher lines represents the total Trash collected by the DustBots, while the lower ones the corresponding Communication Index.
 

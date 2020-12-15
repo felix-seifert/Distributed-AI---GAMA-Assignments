@@ -55,3 +55,9 @@ At the beginning, only the chill people can have a `generous` value which is hig
 ## Experiment Parameters
 
 The parameters of the experiment offer the options to adjust the size of the grid and the number of agents of all five agent classes. Besides these options, you also get the option to edit the options for the part of the experiment which is shown in the diagrams: you can edit values relevant to the drink invitation. It is possible to change the minimum value of `generous` which is needed to invite someone for a drink. Also, the drink invitation does not always happen if the generosity is big enough; besides the minimum value of `generous`, a drink invitation has a certain chance which can also be editet in the parameters. As a last paremeter, you can change the amount by which the `generous` value is increasedd in case of a drink invitation.
+
+## Challenges
+
+## Belief, Desire, Intention
+
+## Reinforcement Learning

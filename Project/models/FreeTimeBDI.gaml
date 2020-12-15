@@ -19,7 +19,7 @@ global {
 	int nbPartyLovers <- 50;
 	int nbChillPeople <- 50;
 	int nbCriminals <- 10;
-	int nbDustBots <- 5;
+	int nbDustBots <- 3;
 	int nbRecycleStations <- 1;
 	
 	int nbAllMovers <- nbPartyLovers + nbChillPeople + nbCriminals;
@@ -65,14 +65,8 @@ global {
     predicate findTrash <- new_predicate("find trash");
     predicate bringTrashToRecycle <- new_predicate("bring trash to recycle");
     predicate shareInformation <- new_predicate("share information");
-
-    
-    float thresholdLaw <- 4.0;
-    float thresholdNorm <- 0.0;
-    float thresholdObligation <- 1.0;
         
     int globalTrash <- 0;
-    
     int communicationIndex <- 0;
 
 	
@@ -206,7 +200,7 @@ species Pub parent: Stall {
 	reflex openKitchen when: !kitchenIsOpen and currentCycle >= kitchenClosedCycles {
 		kitchenIsOpen <- true;
 		currentCycle <- 0;
-		write "@@@@@@@@@@@@@@@Accumulated trash: " + string(trashAccumulated);
+		//write "@@@@@@@@@@@@@@@Accumulated trash: " + string(trashAccumulated);
 		//write self.name + ' opened kitchen';
 	}
 	
@@ -222,7 +216,7 @@ species Pub parent: Stall {
 			list<unknown> c <- q.contents;
 			
 			if(c[0] = inquireKitchenMsg) {
-				trashAccumulated <- trashAccumulated + rnd(1,3);
+				trashAccumulated <- trashAccumulated + rnd(1,5);
 				do query message: q contents: [informAboutKitchenMsg, kitchenIsOpen];
 			}
 		}
@@ -237,16 +231,34 @@ species ConcertHall parent: Stall {
 	int concertCycles <- 70;
 	string currentConcertGenre <- any(musicGenres);
 	
+	list<Mover> knownMovers <- [];
+	list<unknown> musicTasteDistribution <- [];
+	
+	init{
+		loop genre over: musicGenres {
+			add [genre,0] to: musicTasteDistribution;
+		}
+		
+		write musicTasteDistribution;
+	}
+	
+	
+	
 	reflex startNewConcert when: currentCycle > concertCycles {
 		currentCycle <- 0;
 		currentConcertGenre <- any(musicGenres);
 		//write self.name + ' started concert with genre ' + currentConcertGenre;
 	}
 	
+	reflex updateMusicTasteDistribution{
+		
+	}
+	
 	reflex informAboutMusicGenre when: !empty(queries) {
 		
 		loop q over: queries {
 			list<unknown> c <- q.contents;
+			add q.sender to: knownMovers;
 			
 			if(c[0] = inquireGenreMsg) {
 				do query message: q contents: [informAboutGenreMsg, currentConcertGenre];
@@ -510,7 +522,7 @@ species recycleStation {
 
 species DustBot skills: [moving] control:simple_bdi {
 	rgb color <- rgb(235, 255, 255);
-	float sightDistance<-150.0;
+	float sightDistance<-50.0;
     point target;
     int trashCurrentlyHeld;
     int totalTrashCollected;
@@ -521,7 +533,16 @@ species DustBot skills: [moving] control:simple_bdi {
     bool use_emotions_architecture <- true;
     bool use_personality <- true;
     
-    float reputation <- 0.0;
+    float openness <- gauss(0.5,0.12);
+    float conscientiousness <- gauss(0.5,0.12);
+    float extraversion <- gauss(0.5,0.12);
+    float agreeableness <- gauss(0.5,0.12);
+    float neurotism <- gauss(0.5,0.12);
+    
+    float plan_persistence <- 1.0;
+    float intention_persistence <- 1.0;
+    
+    int personalCommunicationIndex <- 0;
     
     //###BDI
     
@@ -529,7 +550,7 @@ species DustBot skills: [moving] control:simple_bdi {
         do add_desire(findTrash);
     }
     
-    perceive target:DustBot in:sightDistance-1 {
+    perceive target:DustBot in:sightDistance {
 		do add_desire(predicate:shareInformation, strength: 5.0);
     }
         
@@ -553,30 +574,6 @@ species DustBot skills: [moving] control:simple_bdi {
         do goto target: target;
     }
     
-        plan getTrash intention:hasTrash  {
-        if (target = nil) {
-            do add_subintention(get_current_intention(),choosePub, true);
-            do current_intention_on_hold();
-        } else {
-            do goto target: target ;
-            if (target = location)  {
-                Pub currentPub<- Pub first_with (target = each.location);
-                if currentPub.trashAccumulated > 0 {
-                     do add_belief(hasTrash);
-                     ask currentPub {
-                     	myself.trashCurrentlyHeld <- myself.trashCurrentlyHeld + min(myself.trashCapacity, trashAccumulated);
-                     	trashAccumulated <- max(0, trashAccumulated - myself.trashCapacity);
-                     }                    
-                     reputation <- reputation + 1;
-                    write "#####################################I collected trash!";
-                } else {
-                    do add_belief(new_predicate(emptyPubLocation, ["location_value"::target]));
-                }
-                target <- nil;
-            }
-        }    
-    }
-    
     plan chooseClosestPub intention: choosePub instantaneous: true{
         list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) collect (point(get_predicate(mental_state (each)).values["location_value"]));
         add possiblePubs[rnd(0,length(possiblePubs)-1)] to: knownPubLocations;
@@ -589,6 +586,32 @@ species DustBot skills: [moving] control:simple_bdi {
         }
         do remove_intention(choosePub, true);
     }
+        
+    plan getTrash intention:hasTrash  {
+        if (target = nil) {
+            do add_subintention(get_current_intention(),choosePub, true);
+            do current_intention_on_hold();
+        } else {
+            do goto target: target ;
+            if (target = location)  {
+                Pub currentPub<- Pub first_with (target = each.location);
+                if currentPub.trashAccumulated > 0 and trashCurrentlyHeld<trashCapacity {
+                     do add_belief(hasTrash);
+                     ask currentPub {
+                     	myself.trashCurrentlyHeld <- myself.trashCurrentlyHeld + min(myself.trashCapacity, trashAccumulated);
+                     	trashAccumulated <- max(0, trashAccumulated - myself.trashCapacity);
+                     }     
+                    //write "#####################################I collected trash!";
+                } else if trashCurrentlyHeld=trashCapacity{
+               		//write "My bag is full!";
+                }
+                else {
+                	do add_belief(new_predicate(emptyPubLocation, ["location_value"::target]));
+                }
+                target <- nil;
+            }
+        }    
+    }
     
     plan goToRecycleStation intention: bringTrashToRecycle {
         do goto target: festivalRecycleCenter;
@@ -596,27 +619,30 @@ species DustBot skills: [moving] control:simple_bdi {
         if (festivalRecycleCenter.location = location)  {
             do remove_belief(hasTrash);
             do remove_intention(bringTrashToRecycle, true);
-            write "BRINGING THIS MUCH TRASH: " + trashCurrentlyHeld;
+            //write "BRINGING THIS MUCH TRASH: " + trashCurrentlyHeld;
             festivalRecycleCenter.totalTrashCollected <- festivalRecycleCenter.totalTrashCollected + trashCurrentlyHeld;
-            totalTrashCollected <- trashCurrentlyHeld;
+            totalTrashCollected <- totalTrashCollected + trashCurrentlyHeld;
             trashCurrentlyHeld <- 0;
-            write "TOTAL TRASH HOLD: " + festivalRecycleCenter.totalTrashCollected;
+            //write "TOTAL TRASH HOLD: " + festivalRecycleCenter.totalTrashCollected;
         }
     }
     
     
     plan shareInfrormation intention: shareInformation instantaneous: true{
-        list<DustBot> otherCriminals <- list<DustBot>((social_link_base where (each.liking > 0)) collect each.agent);
+		list<DustBot> otherDustBots <- list(DustBot);
         loop knownPub over: get_beliefs_with_name(pubAtLocation) {
-            ask otherCriminals {
+            ask otherDustBots {
                 do add_belief(knownPub);
             }
         }
         loop knownEmptyPub over: get_beliefs_with_name(emptyPubLocation) {
-            ask otherCriminals {
+            ask otherDustBots {
                 do add_belief(knownEmptyPub);
             }
         }
+        
+        personalCommunicationIndex <- personalCommunicationIndex + 1;
+        
         communicationIndex <- communicationIndex + 1;
         do remove_intention(shareInformation, true); 
     }
@@ -674,13 +700,13 @@ experiment EnjoyFreeTime type: gui {
 				loop p over:list(Pub){
 				data p.name value: p.trashAccumulated;
 				}
-				data 'Communication Index' value: communicationIndex/100 color: #blue;
+				data 'Communication Index' value: communicationIndex/10 color: #green;
 			}
 			
 		}
 		
-		display reputationChart {
-			chart 'Reputation' type: series {
+		display trashCurrentlyHeldChart {
+			chart 'Trash Currently Held' type: series {
 				loop element over: list(DustBot){
 					data element.name value: element.trashCurrentlyHeld;
 				}
@@ -688,16 +714,29 @@ experiment EnjoyFreeTime type: gui {
 			
 		}
 		
-//		display generous_chart {
-//			chart 'Global Generosity' type: series {
-//				data 'Global Generosity' value: globalGenerous color: #red;
-//			}
-//		}
-//		
-//		display drink_invitations {
-//			chart 'Drink Invitations' type: series {
-//				data 'Number Drink Invitations' value: nbDrinkInvitations color: #blue;
-//			}
-//		}
+		display totalTrashChart {
+			chart 'Total Trash Chart' type: series {
+				rgb color <- #red;
+				
+				loop element over: list(DustBot){
+					color <- rnd_color(100,255);
+					data element.name value: element.totalTrashCollected color:color;
+					data element.name+" PCI: "+string(element.personalCommunicationIndex) value: element.personalCommunicationIndex/10 color:color;
+				}
+			}
+			
+		}
+		
+		display generous_chart {
+			chart 'Global Generosity' type: series {
+				data 'Global Generosity' value: globalGenerous color: #red;
+			}
+		}
+		
+		display drink_invitations {
+			chart 'Drink Invitations' type: series {
+				data 'Number Drink Invitations' value: nbDrinkInvitations color: #blue;
+			}
+		}
 	}
 }

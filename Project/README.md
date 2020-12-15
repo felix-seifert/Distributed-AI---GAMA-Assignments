@@ -63,7 +63,7 @@ We made an integration for both of the challenges.
 
 ## Agent
 For the BDI integration, we have the DustBots as a group of Agents able to interact with Pubs to collect trash. Once the trash is collected, it is brought to the Festival Recylce Center.
-
+`
 float sightDistance<-50.0;
 point target;
 int trashCurrentlyHeld;
@@ -85,7 +85,7 @@ float plan_persistence <- 1.0;
 float intention_persistence <- 1.0;
 
 int personalCommunicationIndex <- 0;
-
+`
 
 ## System
 The DustBot are provided with the skill `simple_bdì`, that allow them to use Beliefs, Desires and Intentions.

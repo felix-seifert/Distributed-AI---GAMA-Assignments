@@ -64,39 +64,39 @@ We made an integration for both of the challenges.
 ## Agent
 For the BDI integration, we have the DustBots as a group of Agents able to interact with Pubs to collect trash. Once the trash is collected, it is brought to the Festival Recylce Center.
 
-`float sightDistance<-50.0;`
+`float sightDistance<-50.0;` Distance at which interaction among DustBots and between DustBots and Pubs can happen
 
 `point target;`
 
-`int trashCurrentlyHeld;`
+`int trashCurrentlyHeld;`Trash currently being transportated by the DustBot
 
-`int totalTrashCollected;`
+`int totalTrashCollected;`Total amount of Trash collected through the time
 
-`int trashCapacity <- 5;`
+`int trashCapacity <- 5;`Amount of Trash each DustBot can transport
 
-`list<point> knownPubLocations <- [];`
+`list<point> knownPubLocations <- [];`Memory of known Pubs
 
-`bool use_social_architecture <- true;`
+`bool use_social_architecture <- true;`BDI feature (communication among DustBots)
 
-`bool use_emotions_architecture <- true;`
+`bool use_emotions_architecture <- true;`BDI feature (joy)
 
-`bool use_personality <- true;`
+`bool use_personality <- true;`BDI feature (to add randomness to the DustBots)
 
-`float openness <- gauss(0.5,0.12);`
+`float openness <- gauss(0.5,0.12);`as above
 
-`float conscientiousness <- gauss(0.5,0.12);`
+`float conscientiousness <- gauss(0.5,0.12);`as above
 
-`float extraversion <- gauss(0.5,0.12);`
+`float extraversion <- gauss(0.5,0.12);`as above
 
-`float agreeableness <- gauss(0.5,0.12);`
+`float agreeableness <- gauss(0.5,0.12);`as above
 
-`float neurotism <- gauss(0.5,0.12);`
+`float neurotism <- gauss(0.5,0.12);`as above
 
-`float plan_persistence <- 1.0;`
+`float plan_persistence <- 1.0;`as above
 
-`float intention_persistence <- 1.0;`
+`float intention_persistence <- 1.0;`as above
 
-`int personalCommunicationIndex <- 0;`
+`int personalCommunicationIndex <- 0;`Amount of social interactions held by the DustBot
 
 ## System
 The DustBot are provided with the skill `simple_bdì`, that allow them to use Beliefs, Desires and Intentions.

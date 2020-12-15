@@ -59,16 +59,40 @@ The parameters of the experiment offer the options to adjust the size of the gri
 ## Challenges
 We made an integration for both of the challenges.
 
-
-
 ## Belief, Desire, Intention
+
+## Agent
 For the BDI integration, we have the DustBots as a group of Agents able to interact with Pubs to collect trash. Once the trash is collected, it is brought to the Festival Recylce Center.
 
+float sightDistance<-50.0;
+point target;
+int trashCurrentlyHeld;
+int totalTrashCollected;
+int trashCapacity <- 5;
+list<point> knownPubLocations <- [];
+
+bool use_social_architecture <- true;
+bool use_emotions_architecture <- true;
+bool use_personality <- true;
+
+float openness <- gauss(0.5,0.12);
+float conscientiousness <- gauss(0.5,0.12);
+float extraversion <- gauss(0.5,0.12);
+float agreeableness <- gauss(0.5,0.12);
+float neurotism <- gauss(0.5,0.12);
+
+float plan_persistence <- 1.0;
+float intention_persistence <- 1.0;
+
+int personalCommunicationIndex <- 0;
+
+
+## System
 The DustBot are provided with the skill `simple_bdì`, that allow them to use Beliefs, Desires and Intentions.
 
 The initialization of each of these DustBots begins with adding the desire to find Trash (`findTrash`).
 
-They are able to perceive two targets: other DustBots and Pubs. When another DustBot is perceived, the desire to share information (`shareInformation`) is set with a strenght of 5.0. Otherwise when a Pub is perceived and if it`s not empty (`each.trashAccumulated > 0`) and inside the sight distance (`sightDistance`), the joy emotion will be triggered. Once a DustBot is joyous, the desire to share information (`shareInformation`) is set with a strenght of 5.0. The plan `shareInformation` will be explained after.
+They are able to perceive two targets: other DustBots and Pubs. When another DustBot is perceived, the desire to share information (`shareInformation`) is set with a strenght of 5.0. Otherwise when a Pub is perceived and if it's not empty (`each.trashAccumulated > 0`) and inside the sight distance (`sightDistance`), the joy emotion will be triggered. Once a DustBot is joyous, the desire to share information (`shareInformation`) is set with a strenght of 5.0. The plan `shareInformation` will be explained after.
 
 In this case, since trash has been found, the intention to find it is removed (`remove_intention(findTrash, false)`).
 
@@ -112,7 +136,7 @@ If a Pub is unseen, Trash will be accumulated.
 
 The second image shows how much Trash is accumulated in each Pub (Red and Blue lines) through the time. After the 1200th cycle of execution, the DustBots discovers the Trash in the Pub and start to clean it. Once the Pub is empty of Trash, the DustBots can keep the whole Festival Trash value under control.
 
-The Blue line represent the second Pub accumulated Trash: it`s possible to see that now and then Trash appears, but it is instantly collected by the DustBot. The same behavior will follow after the 5000th cycle for the first Pub (Red line).
+The Blue line represent the second Pub accumulated Trash: it's possible to see that now and then Trash appears, but it is instantly collected by the DustBot. The same behavior will follow after the 5000th cycle for the first Pub (Red line).
 
 Even though in this image is not noticeable, in this graph is also represented the general Communication Index (`communicationIndex`) as a Green line. It is increased by 1 everytime a communication among the DustBots happens, but it is represented divided by 1000 as it explodes in the value through time.
 
@@ -126,8 +150,8 @@ From the same simulation of the first two images:
 
 <img src="https://user-images.githubusercontent.com/36768662/102253489-aa55c200-3f07-11eb-8fc5-7bfc1a3b112d.png">
 
-This graph represents the Trash currently held by each DustBot through time. As their maximum capacity is 5 in this simulation, they can`t hold more Trash, as shown in the graph.
-The DustBot0 (Red line) wasn`t active for the first 1500 cycles, but as soon as the second Pub is discovered, he starts to clean it from the Trash (as noticeable in the first figure).
+This graph represents the Trash currently held by each DustBot through time. As their maximum capacity is 5 in this simulation, they can't hold more Trash, as shown in the graph.
+The DustBot0 (Red line) wasn't active for the first 1500 cycles, but as soon as the second Pub is discovered, he starts to clean it from the Trash (as noticeable in the first figure).
 
 As regards how each DustBot performed:
 
@@ -135,7 +159,7 @@ As regards how each DustBot performed:
 
 With the same color are represented the total Trash collected by one DustBot and its individual Communication Index (`personalCommunicationIndex`). To be more precise, the 3 higher lines represents the total Trash collected by the DustBots, while the lower ones the corresponding Communication Index. The personal Communication Index are shown divided by 10, as their value explodes through time.
 
-Here (DustBot2 PCI, Grey line), in comparison with the previous graph (DustBot2 Trash currently held, Green line), confirm that the first Trash collection for DustBot2 happened around the 1000th cycle. This happened because it wasn`t able to communicate with the other DustBots, as it`s shown in its low PCI (`personalCommunicationIndex`), due to the distance.
+Here (DustBot2 PCI, Grey line), in comparison with the previous graph (DustBot2 Trash currently held, Green line), confirm that the first Trash collection for DustBot2 happened around the 1000th cycle. This happened because it wasn't able to communicate with the other DustBots, as it's shown in its low PCI (`personalCommunicationIndex`), due to the distance.
 
 If the 'sightDistance' is decreased, DustBot will find more difficult to collect Trash from Pubs. Simulations of this possibility create a big amount of Trash at the beginning, until the Pub is discovered. A solution can be applying an increasing 'sightDistance' that is proportional to the total Trash in the Festival. This would allow, in case some Trash accumulates in a hidden part of the Map, to let this Pubs to be discovered.
 

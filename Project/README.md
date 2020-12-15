@@ -132,7 +132,7 @@ This let the mechanics of the Party to interact with the BDI interface: everytim
 
 A balancing in the number of Guests and DustBots is required in order to keep the Festival empty of Trash.
 
-Here is a simulation of the experiment:
+## Simulation
 
 <img src="https://user-images.githubusercontent.com/36768662/102253483-a9249500-3f07-11eb-96bb-4aaf0faac92d.png">
 
@@ -225,3 +225,8 @@ If the elected musicGenre proposed `electedConcertGenre` is a new one, the pertu
 
 Even though this Reinforcement Learning module is a simple process, the choice of the maximum value of `probabilitiesAfterPerturbation` grants the capability to follow the best music trends. For example, if a money value is introduced in the system with a continuous and equal distribution among the agents, this algorithm will be able to maximize the revenues.
 
+## Simulation
+<img src="https://user-images.githubusercontent.com/36768662/102285280-4ac2db00-3f36-11eb-9fcf-31d15cc2a628.gif>
+          
+          
+<img src="https://user-images.githubusercontent.com/36768662/102285283-4b5b7180-3f36-11eb-9458-2ef8e1d5b77b.gif>

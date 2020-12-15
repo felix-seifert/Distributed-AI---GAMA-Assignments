@@ -21,7 +21,7 @@ global {
 	int nbPartyLovers <- 50;
 	int nbChillPeople <- 50;
 	int nbCriminals <- 10;
-	int nbDustBots <- 0;
+	int nbDustBots <- 3;
 	int nbRecycleStations <- 1;
 	
 	int nbAllMovers <- nbPartyLovers + nbChillPeople + nbCriminals;
@@ -294,7 +294,7 @@ species ConcertHall parent: Stall {
 			choosenConcertGenre <- electedConcertGenre;
 			probabilityPerturbations[probabilities index_of max(probabilities)] <- probabilityPerturbations[probabilities index_of max(probabilities)] + 0.2;
 		}
-		write "probabilityPerturbations: " + string(probabilityPerturbations);
+		//write "probabilityPerturbations: " + string(probabilityPerturbations);
 		
 	}
 	

@@ -180,26 +180,28 @@ PartyLovers are now implemented with a random music taste change through `reflex
 The ConcertHalls are now implemented with a trend following algorithm.
 Through time, PartyLovers will move their preference to different music genres, as so will do the ConcertHalls.
 
+These are the new variables introduced for the `species ConcertHall`:
+
 `int changeMusicTasteThreshold <- 92` Represent the probability, for every PartyLover, not to change its music tastes at every step. This parameters can be changed during execution.
 
-`list<PartyLover> knownPartyLovers <- [];`
+`list<PartyLover> knownPartyLovers <- [];` Contains the PartyLovers that have interacted with the ConcertHall
 
-`list<string> musicTasteDistribution <- [];`
+`list<string> musicTasteDistribution <- [];`Contains strings as 'Rock', 'Funk', ... that are taken as single vote in the preference evaluation
 
-`list<int> musicTasteCount <- [0,0,0,0,0];`
+`list<int> musicTasteCount <- [0,0,0,0,0];`Contains the number of person that enjoy the corresponding index (0 = 'Rock', 1 = ...)
 
-`int totalCount <- 0;`
+`int totalCount <- 0;` Equivalent to the number of preferences taken into consideration (from musicTasteDistribution)
 
-`list<float>probabilities <- [0.0,0.0,0.0,0.0,0.0];`
+`list<float>probabilities <- [0.0,0.0,0.0,0.0,0.0];` Current probabilities prediction based on known PartyLovers
 
-`list<float>probabilityPerturbations <- [0.0,0.0,0.0,0.0,0.0];`
+`list<float>probabilityPerturbations <- [0.0,0.0,0.0,0.0,0.0];` Stored Perturbation to avoid fashions: musicGenres decay through time by assigning a temporary negative/positive compensation
 
-`list<float>probabilitiesAfterPerturbation <- [0.0,0.0,0.0,0.0,0.0];`
+`list<float>probabilitiesAfterPerturbation <- [0.0,0.0,0.0,0.0,0.0];` Sum of `probabilities` and `probabilityPerturbations`
 
-`string electedConcertGenre <- "";`
+`string electedConcertGenre <- "";` New proposed musicGenre for the next concert cycle
 
-`string choosenConcertGenre <- "";`
+`string choosenConcertGenre <- "";` If the electedConcertGenre is different from previousMusicGenre, this is equivalent to the new music genre decided
 
-`string previousMusicGenre <- "";`
+`string previousMusicGenre <- "";` Used to evaluate possible fashions situations
 
-`float maxFashionDecay <- rnd(-0.5,0.0);`
+`float maxFashionDecay <- rnd(-0.5,0.0);` To limit Fasion decay

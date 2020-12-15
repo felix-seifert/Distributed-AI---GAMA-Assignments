@@ -131,7 +131,7 @@ The DustBot0 (Red line) wasn't active for the first 1500 cycles, but as soon as 
 
 As regards how each DustBot performed:
 
-<img src="https://user-images.githubusercontent.com/36768662/102253484-a9249500-3f07-11eb-8fd7-84778188e0b1.png>
+<img src="https://user-images.githubusercontent.com/36768662/102253484-a9249500-3f07-11eb-8fd7-84778188e0b1.png">
 
 With the same color are represented the total Trash collected by one DustBot and its individual Communication Index ('personalCommunicationIndex'). To be more precise, the 3 higher lines represents the total Trash collected by the DustBots, while the lower ones the corresponding Communication Index.
 

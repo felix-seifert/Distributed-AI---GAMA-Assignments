@@ -62,6 +62,7 @@ We made an integration for both of the challenges.
 ## Belief, Desire, Intention
 
 ## Agent
+
 For the BDI integration, we have the DustBots as a group of Agents able to interact with Pubs to collect trash. Once the trash is collected, it is brought to the Festival Recylce Center.
 
 `float sightDistance<-50.0;` Distance at which interaction among DustBots and between DustBots and Pubs can happen
@@ -99,6 +100,7 @@ For the BDI integration, we have the DustBots as a group of Agents able to inter
 `int personalCommunicationIndex <- 0;`Amount of social interactions held by the DustBot
 
 ## System
+
 The DustBot are provided with the skill `simple_bdì`, that allow them to use Beliefs, Desires and Intentions.
 
 The initialization of each of these DustBots begins with adding the desire to find Trash (`findTrash`).
@@ -181,6 +183,7 @@ The ConcertHalls are now implemented with a trend following algorithm.
 Through time, PartyLovers will move their preference to different music genres, as so will do the ConcertHalls.
 
 ## Agent
+
 These are the new variables introduced for the `species ConcertHall`:
 
 `int changeMusicTasteThreshold <- 92` Represent the probability, for every PartyLover, not to change its music tastes at every step. This parameters can be changed during execution.
@@ -208,6 +211,7 @@ These are the new variables introduced for the `species ConcertHall`:
 `float maxFashionDecay <- rnd(-0.5,0.0);` To limit Fasion decay
 
 ## System
+
 Only one action (`updateMusicPlanning`) has been added to the base code.
 
 The `knownPartyLovers` are checked for their music tastes: these are added as tokens into `musicTasteDistribution`.
@@ -225,13 +229,16 @@ If the elected musicGenre proposed `electedConcertGenre` is a new one, the pertu
 
 Even though this Reinforcement Learning module is a simple process, the choice of the maximum value of `probabilitiesAfterPerturbation` grants to ConcertHalls the capability to follow the best music trends. For example, if a money value is introduced in the system with a continuous and equal distribution among the agents, this algorithm will be able to maximize the revenues.
 
-In Reinforcement Learning language:
-The ConcertHall start without knownledge of its environment. It interacts throgh time with PartyLovers while they ask for information about the concert. Everytime there's an interaction, the ConcertHall formulate a new probability distribution of what's the best choice for the next concert. Then, it applies the action of starting the concert with the selected musicGenre. The increase in number of people satisfied with this choice is technically the reward we can convert into revenue.
+The ConcertHall start without knownledge of its environment. It interacts throgh time with PartyLovers while they ask for information about the concert. Everytime there's an interaction, the ConcertHall formulate a new probability distribution of what's the best choice for the next concert based on its knowledge of the environment. Then, it applies the action of starting the concert with the selected musicGenre. The increase in number of people satisfied with this choice is technically the reward we can convert into revenue.
 
 Even tough movement is not included in the RL implementation, it's possible to imagine the trend as a point that has to be followed by the ConcertHall. This algorithm allows the ConcertHalls to continuously follow the music tastes through the random variation of the PartyLovers tastes.
 
 ## Simulation
+
 <img src="https://user-images.githubusercontent.com/36768662/102285280-4ac2db00-3f36-11eb-9fcf-31d15cc2a628.gif">
 
+In this chart is shown the starting point of the ConcertHall knowledge. Each new musicGenre is added to the chart. The section with higher area will be the choice for the next concert. Few seconds before the ending of the GIF it's possible to see a variation of speed, due to the higher number of tokens taken into consideration for the choice.
           
 <img src="https://user-images.githubusercontent.com/36768662/102285283-4b5b7180-3f36-11eb-9458-2ef8e1d5b77b.gif">
+The variation of `changeMusicTasteThreshold` can perturbate the randomness of music tastes of the PartyLovers. Even at the fastest speed of variation (`changeMusicTasteThreshold = 0`), the algorithm is able to perform a good choice in terms of reward.
+If the value of `changeMusicTasteThreshold` is set to 100, the variation of music tastes from PartyLover will stop, and so will the ConcertHall choices.

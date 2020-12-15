@@ -180,5 +180,16 @@ PartyLovers are now implemented with a random music taste change through `reflex
 The ConcertHalls are now implemented with a trend following algorithm.
 Through time, PartyLovers will move their preference to different music genres, as so will do the ConcertHalls.
 
-`int changeMusicTasteThreshold <- 92;` Represent the probability, for every PartyLover, not to change its music tastes at every step. This parameters can be changed during execution.
+`int changeMusicTasteThreshold <- 92` Represent the probability, for every PartyLover, not to change its music tastes at every step. This parameters can be changed during execution.
 
+`list<PartyLover> knownPartyLovers <- [];`
+`list<string> musicTasteDistribution <- [];`
+`list<int> musicTasteCount <- [0,0,0,0,0];`
+`int totalCount <- 0;`
+`list<float>probabilities <- [0.0,0.0,0.0,0.0,0.0];`
+`list<float>probabilityPerturbations <- [0.0,0.0,0.0,0.0,0.0];`
+`list<float>probabilitiesAfterPerturbation <- [0.0,0.0,0.0,0.0,0.0];`
+`string electedConcertGenre <- "";`
+`string choosenConcertGenre <- "";`
+`string previousMusicGenre <- "";`
+`float maxFashionDecay <- rnd(-0.5,0.0);`

@@ -57,7 +57,26 @@ At the beginning, only the chill people can have a `generous` value which is hig
 The parameters of the experiment offer the options to adjust the size of the grid and the number of agents of all five agent classes. Besides these options, you also get the option to edit the options for the part of the experiment which is shown in the diagrams: you can edit values relevant to the drink invitation. It is possible to change the minimum value of `generous` which is needed to invite someone for a drink. Also, the drink invitation does not always happen if the generosity is big enough; besides the minimum value of `generous`, a drink invitation has a certain chance which can also be editet in the parameters. As a last paremeter, you can change the amount by which the `generous` value is increasedd in case of a drink invitation.
 
 ## Challenges
+We made an integration for both of the challenges.
+
+
 
 ## Belief, Desire, Intention
+For the BDI integration, we have the DustBots as a group of Agents able to interact with Pubs to collect trash. Once the trash is collected, it is brought to the Festival Recylce Center.
+
+The DustBot are provided with the skill 'simple_bdì', that allow them to use Beliefs, Desires and Intentions.
+
+The initialization of each of these DustBots begins with adding the desire to find Trash ('findTrash').
+
+They are able to perceive two targets: other DustBots and Pubs. When another DustBot is perceived, the desire to share information ('shareInformation') is set with a strenght of 5.0. Otherwise when a Pub is perceived and if it's not empty ('each.trashAccumulated > 0') and inside the sight distance ('sightDistance'), the joy emotion will be triggered. Once a DustBot is joyous, the desire to share information ('shareInformation') is set with a strenght of 5.0. In this case, since trash has been found, the intention to find it is removed ('remove_intention(findTrash, false)').
+
+In order to establish a hierarchy in the possible actions, we set two rules:
+'rule belief: pubLocation new_desire: hasTrash strength: 2.0;'
+'rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;'
+The first rule explain that if there's a belief about a Pub location (not empty of trash), then trash can be found there; the second one allows the DustBot to bring Trash to recycle after Trash has been collected.
+
+Since the communication among these agents can be faulty, they are provided with a simple individual memory of the known Pub locations. When a DustBot is in 'wander' state, he will then reach one of the known Pubs to check what's its Trash status.
+
+When 
 
 ## Reinforcement Learning

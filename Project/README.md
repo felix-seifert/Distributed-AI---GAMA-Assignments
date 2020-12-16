@@ -242,3 +242,10 @@ In this chart is shown the starting point of the ConcertHall knowledge. Each new
 <img src="https://user-images.githubusercontent.com/36768662/102285283-4b5b7180-3f36-11eb-9458-2ef8e1d5b77b.gif">
 The variation of `changeMusicTasteThreshold` can perturbate the randomness of music tastes of the PartyLovers. Even at the fastest speed of variation (`changeMusicTasteThreshold = 0`), the algorithm is able to perform a good choice in terms of reward.
 If the value of `changeMusicTasteThreshold` is set to 100, the variation of music tastes from PartyLover will stop, and so will the ConcertHall choices.
+
+<img src="https://user-images.githubusercontent.com/36768662/102291012-70ee7800-3f42-11eb-943e-1e0b52210889.gif">
+In this chart is represented that the choice of the ConcertHall corresponds with the most requested musicGenre (there's some latency, fast simulation can be approximative).
+
+<img src="https://user-images.githubusercontent.com/36768662/102291014-721fa500-3f42-11eb-9de2-afda2e3895d3.gif">
+As last, it's possible to disable a type of music, through e.g. `disableRock`. In the GIF above is represented what happens if a musicGenre can't be selected as new favourite music Genre by PartyLovers. The result shows robustness for the algorithm, that's capable to follow the change.
+

@@ -1,11 +1,10 @@
 /**
 * Name: FreeTime
 * Model which simulates different humanoid entities who spend their free time and interact with each other.
-* BDI: DustBots collect Trash around the map, communicating among them about the Trash quantities of the Pub.
+* BDI: DustBots collect trash and communicate among them about trash quantities of pubs.
 * RL: ConcertHalls interact with PartyLovers to discover music tastes to adapt MusicGenre for next concert.
 * Author: Marco Molinari <molinarimarco8@gmail.com>, Felix Seifert <mail@felix-seifert.com>
 */
-
 
 model FreeTime
 
@@ -54,11 +53,11 @@ global {
 	
 	emotion joy <- new_emotion("joy");
 	
-	//###RL
+	// RL
 	int changeMusicTasteThreshold <- 92;	
 	
-	//###BDI
-	recycleStation festivalRecycleCenter;
+	// BDI
+	RecycleStation festivalRecycleCenter;
     
     string pubAtLocation <- "pubAtLocation";
     string emptyPubLocation <- "emptyPubLocation";
@@ -72,7 +71,6 @@ global {
         
     int globalTrash <- 0;
     int communicationIndex <- 0;
-
 	
 	reflex updateGlobalGenerous when: cycle mod 10 = 0 {
 		
@@ -102,7 +100,7 @@ global {
 		create Criminal number: nbCriminals;
 		create DustBot number: nbDustBots;
 		
-		create recycleStation {
+		create RecycleStation {
             festivalRecycleCenter <- self;
  			self.location <- {gridWidth*5, gridHeight*5};
         }
@@ -257,19 +255,17 @@ species ConcertHall parent: Stall {
 		
 		//write musicTasteDistribution;
 		
-		int counter <- 0;
+		totalCount <- 0;
 		
-		loop mg over: musicGenres{
+		loop mg over: musicGenres {
 			add (musicTasteDistribution count (each = mg)) to: musicTasteCount;
-			counter <- counter + 1;
+			totalCount <- totalCount + (musicTasteDistribution count (each = mg));
 		}
 		
 		//write musicTasteCount;
 		
-		totalCount <- musicTasteCount[0] + musicTasteCount[1] + musicTasteCount[2] + musicTasteCount[3] + musicTasteCount[4];
-		
-		loop mg from: 0 to: length(musicGenres)-1{
-			probabilities[mg] <- musicTasteCount[mg]/totalCount;
+		loop i from: 0 to: length(musicGenres) - 1 {
+			probabilities[i] <- musicTasteCount[i] / totalCount;
 		}
 		
 		//write "probabilities: " + string(probabilities);
@@ -281,24 +277,24 @@ species ConcertHall parent: Stall {
 		//write max(probabilitiesAfterPerturbation);
 		//write probabilitiesAfterPerturbation index_of max(probabilitiesAfterPerturbation);
 		
-		electedConcertGenre <- musicGenres[probabilitiesAfterPerturbation index_of max(probabilitiesAfterPerturbation)];
+		electedConcertGenre <- musicGenres[probabilitiesAfterPerturbation index_of 
+				max(probabilitiesAfterPerturbation)];
 		
-		if electedConcertGenre = previousMusicGenre{
-			if probabilityPerturbations[probabilities index_of max(probabilities)]<maxFashionDecay{
-				probabilityPerturbations[probabilities index_of max(probabilities)] <- probabilityPerturbations[probabilities index_of max(probabilities)] - 0.05;	
+		if(electedConcertGenre = previousMusicGenre) {
+			if(probabilityPerturbations[probabilities index_of max(probabilities)] < maxFashionDecay) {
+				probabilityPerturbations[probabilities index_of max(probabilities)] <- 
+						probabilityPerturbations[probabilities index_of max(probabilities)] - 0.05;	
 			}
+			return;
 		}
-		else{
-			probabilityPerturbations[probabilities index_of max(probabilities)] <- 0.0;
-			previousMusicGenre <- electedConcertGenre;
-			choosenConcertGenre <- electedConcertGenre;
-			probabilityPerturbations[probabilities index_of max(probabilities)] <- probabilityPerturbations[probabilities index_of max(probabilities)] + 0.2;
-		}
-		//write "probabilityPerturbations: " + string(probabilityPerturbations);
-		
+		probabilityPerturbations[probabilities index_of max(probabilities)] <- 0.0;
+		previousMusicGenre <- electedConcertGenre;
+		choosenConcertGenre <- electedConcertGenre;
+		probabilityPerturbations[probabilities index_of max(probabilities)] <- 
+				probabilityPerturbations[probabilities index_of max(probabilities)] + 0.2;
 	}
 	
-	//###BASE	
+	// BASE	
 	reflex startNewConcert when: currentCycle > concertCycles {
 		currentCycle <- 0;
 		currentConcertGenre <- choosenConcertGenre;
@@ -308,7 +304,7 @@ species ConcertHall parent: Stall {
 	reflex informAboutMusicGenre when: !empty(queries) {
 		loop q over: queries {
 			list<unknown> c <- q.contents;
-			if !(q.sender in knownPartyLovers){
+			if(!(q.sender in knownPartyLovers)) {
 				add q.sender to: knownPartyLovers;	
 			}
 			if(c[0] = inquireGenreMsg) {
@@ -433,14 +429,16 @@ species Mover skills: [moving, fipa] {
 
 species PartyLover parent: Mover {
 	rgb color <- rgb(220, 120, 50);
+	
 	float noisy <- rnd(0.3, 1.0);
+	
 	list<string> favouriteMusicGenres <- [any(musicGenres), any(musicGenres)];
 	
 	//###RL
 	int changeMusicTaste <- rnd(0, 100);
 	
 	//###BASE
-	reflex considerNewMusicGenre when: changeMusicTaste>changeMusicTasteThreshold{
+	reflex considerNewMusicGenre when: changeMusicTaste > changeMusicTasteThreshold {
 		favouriteMusicGenres[rnd(1)] <- any(musicGenres);
 	}
 	
@@ -454,6 +452,7 @@ species PartyLover parent: Mover {
 	}
 	
 	reflex reactOnMusicGenre when: inStall and !empty(queries) {
+		
 		loop q over: queries {
 			list<unknown> c <- q.contents;
 			
@@ -478,16 +477,21 @@ species PartyLover parent: Mover {
 
 species ChillPerson parent: Mover {
 	rgb color <- rgb(120, 120, 120);
+	
 	float generous <- rnd(0.3, 1.0);
+	
 	float maximumAcceptedNoiseLevel <- 0.4;
 	
 	reflex askForFellowGuests when: inStall and !oneTimeInteractionDone {
+		
 		do start_conversation to: [targetStall] performative: 'request'
 				contents: [askForGuestsMsg];
+				
 		oneTimeInteractionDone <- true;
 	}
 	
 	reflex reactOnFellowGuests when: inStall and !empty(informs) {
+		
 		loop i over: informs {
 			list<unknown> c <- i.contents;
 			
@@ -549,14 +553,16 @@ species Criminal parent: Mover {
 	}
 }
 
-species recycleStation {
+species RecycleStation {
+	
     int totalTrashCollected;
+    
     aspect default {
         draw square(5) color: #black ;
     }
 }
 
-species DustBot skills: [moving] control:simple_bdi {
+species DustBot skills: [moving] control: simple_bdi {
 	//###BDI
 	rgb color <- rgb(235, 255, 255);
 	float sightDistance<-50.0;
@@ -585,15 +591,15 @@ species DustBot skills: [moving] control:simple_bdi {
         do add_desire(findTrash);
     }
     
-    perceive target:DustBot in:sightDistance {
-		do add_desire(predicate:shareInformation, strength: 5.0);
+    perceive target: DustBot in: sightDistance {
+		do add_desire(predicate: shareInformation, strength: 5.0);
     }
         
     perceive target: Pub where (each.trashAccumulated > 0) in: sightDistance {
         focus id: pubAtLocation var: location;
         ask myself {
-            if (has_emotion(joy)) {
-                do add_desire(predicate:shareInformation, strength: 5.0);
+            if(has_emotion(joy)) {
+                do add_desire(predicate: shareInformation, strength: 5.0);
             }
             do remove_intention(findTrash, false);
         }
@@ -602,43 +608,54 @@ species DustBot skills: [moving] control:simple_bdi {
     rule belief: pubLocation new_desire: hasTrash strength: 2.0;
     rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;
     
-    plan randomMove intention:findTrash {
+    plan randomMove intention: findTrash {
     	do wander;
         target <- one_of(knownPubLocations);
         do goto target: target;
     }
     
-    plan chooseClosestPub intention: choosePub instantaneous: true{
-        list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) collect (point(get_predicate(mental_state (each)).values["location_value"]));
+    plan chooseClosestPub intention: choosePub instantaneous: true {
+    	
+        list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) 
+        		collect (point(get_predicate(mental_state (each)).values["location_value"]));
         add possiblePubs[rnd(0,length(possiblePubs)-1)] to: knownPubLocations;
-        list<point> emptyPubs <- get_beliefs_with_name(emptyPubLocation) collect (point(get_predicate(mental_state (each)).values["location_value"]));
+        
+        list<point> emptyPubs <- get_beliefs_with_name(emptyPubLocation) 
+        		collect (point(get_predicate(mental_state (each)).values["location_value"]));
         possiblePubs <- possiblePubs - emptyPubs;
-        if (empty(possiblePubs)) {
+        
+        if(empty(possiblePubs)) {
             do remove_intention(hasTrash, true); 
-        } else {
+        }
+        else {
             target <- (possiblePubs with_min_of (each distance_to self)).location;
         }
         do remove_intention(choosePub, true);
     }
         
-    plan getTrash intention:hasTrash  {
-        if (target = nil) {
+    plan getTrash intention: hasTrash  {
+    	
+        if(target = nil) {
             do add_subintention(get_current_intention(),choosePub, true);
             do current_intention_on_hold();
-        } else {
-            do goto target: target ;
-            if (target = location)  {
+        }
+        else {
+            do goto target: target;
+            
+            if(target = location)  {
                 Pub currentPub<- Pub first_with (target = each.location);
-                if currentPub.trashAccumulated > 0 and trashCurrentlyHeld<trashCapacity {
+                if(currentPub.trashAccumulated > 0 and trashCurrentlyHeld<trashCapacity) {
                      do add_belief(hasTrash);
                      ask currentPub {
-                     	myself.trashCurrentlyHeld <- myself.trashCurrentlyHeld + min(myself.trashCapacity, trashAccumulated);
+                     	myself.trashCurrentlyHeld <- 
+                     			myself.trashCurrentlyHeld + min(myself.trashCapacity, trashAccumulated);
                      	trashAccumulated <- max(0, trashAccumulated - myself.trashCapacity);
                      }     
-                    //write self.name + " I collected trash!";
-                } else if trashCurrentlyHeld=trashCapacity{
-               		//write self.name + " My bag is full!";
-                }
+                    //write self.name + ": I collected trash!";
+                } 
+//                else if(trashCurrentlyHeld=trashCapacity) {
+//               		write self.name + ": My bag is full!";
+//                }
                 else {
                 	do add_belief(new_predicate(emptyPubLocation, ["location_value"::target]));
                 }
@@ -649,24 +666,28 @@ species DustBot skills: [moving] control:simple_bdi {
     
     plan goToRecycleStation intention: bringTrashToRecycle {
         do goto target: festivalRecycleCenter;
-        if (festivalRecycleCenter.location = location)  {
+        
+        if(festivalRecycleCenter.location = location) {
             do remove_belief(hasTrash);
             do remove_intention(bringTrashToRecycle, true);
             //write "BRINGING THIS MUCH TRASH: " + trashCurrentlyHeld;
-            festivalRecycleCenter.totalTrashCollected <- festivalRecycleCenter.totalTrashCollected + trashCurrentlyHeld;
+            festivalRecycleCenter.totalTrashCollected <- 
+            		festivalRecycleCenter.totalTrashCollected + trashCurrentlyHeld;
             totalTrashCollected <- totalTrashCollected + trashCurrentlyHeld;
             trashCurrentlyHeld <- 0;
             //write "TOTAL TRASH HOLD: " + festivalRecycleCenter.totalTrashCollected;
         }
     }
     
-    plan shareInfrormation intention: shareInformation instantaneous: true{
+    plan shareInfrormation intention: shareInformation instantaneous: true {
 		list<DustBot> otherDustBots <- list(DustBot);
+		
         loop knownPub over: get_beliefs_with_name(pubAtLocation) {
             ask otherDustBots {
                 do add_belief(knownPub);
             }
         }
+        
         loop knownEmptyPub over: get_beliefs_with_name(emptyPubLocation) {
             ask otherDustBots {
                 do add_belief(knownEmptyPub);
@@ -682,7 +703,6 @@ species DustBot skills: [moving] control:simple_bdi {
         draw circle(trashCurrentlyHeld/3 + 1) color: color border: #black depth: totalTrashCollected;
     }
 }
-
 
 grid Cell width: gridWidth height: gridHeight neighbors: 4 {}
 
@@ -706,18 +726,16 @@ experiment EnjoyFreeTime type: gui {
 			category: "Number of Movers";
 	parameter "Number of DustBots: " var: nbDustBots min: 0 max: 10 
 			category: "Number of Movers";
-	parameter "Number of Criminals: " var: nbCriminals min: 10 max: 20 
-			category: "Number of Movers";
 			
-	parameter "Minimum Generosity to Invite for Drink: " var: valueForGenerousEnough min: 0.1 max: 1.0 
-			category: "Invitation for Drinks";
-	parameter "Chance to Invite for Drink: " var: chanceToInviteSomeoneForDrink min: 0.1 max: 1.0 
-			category: "Invitation for Drinks";
-	parameter "Increment of Generosity after Drink Invitation: " var: incrementGenerous min: 0.005 max: 0.1 
-			category: "Invitation for Drinks";
+	parameter "Minimum Generosity to Invite for Drink: " var: valueForGenerousEnough 
+			min: 0.1 max: 1.0 category: "Invitation for Drinks";
+	parameter "Chance to Invite for Drink: " var: chanceToInviteSomeoneForDrink 
+			min: 0.1 max: 1.0 category: "Invitation for Drinks";
+	parameter "Increment of Generosity after Drink Invitation: " var: incrementGenerous 
+			min: 0.005 max: 0.1 category: "Invitation for Drinks";
 			
-	parameter "Change Music Taste Threshold" var: changeMusicTasteThreshold min: 0 max: 100 
-			category: "Reinforcement Learning";		
+	parameter "Change Music Taste Threshold" var: changeMusicTasteThreshold 
+			min: 0 max: 100 category: "Reinforcement Learning";		
 
 	output {
 		display main_display {
@@ -729,7 +747,7 @@ experiment EnjoyFreeTime type: gui {
 			species ChillPerson;
 			species Criminal;
 			species DustBot;
-			species recycleStation;
+			species RecycleStation;
 		}		
 		
 		display generous_chart {
@@ -746,8 +764,8 @@ experiment EnjoyFreeTime type: gui {
 				
 		display trashChartBDI {
 			chart 'Global Trash' type: series {
-				loop p over:list(Pub){
-				data p.name value: p.trashAccumulated;
+				loop p over: list(Pub) {
+					data p.name value: p.trashAccumulated;
 				}
 				data 'Communication Index' value: communicationIndex/10 color: #green;
 			}
@@ -755,7 +773,7 @@ experiment EnjoyFreeTime type: gui {
 		
 		display trashCurrentlyHeldChartBDI {
 			chart 'Trash Currently Held' type: series {
-				loop element over: list(DustBot){
+				loop element over: list(DustBot) {
 					data element.name value: element.trashCurrentlyHeld;
 				}
 			}
@@ -763,10 +781,11 @@ experiment EnjoyFreeTime type: gui {
 		
 		display totalTrashChartBDI {
 			chart 'Total Trash Chart' type: series {
-				loop element over: list(DustBot){
+				loop element over: list(DustBot) {
 					color <- rnd_color(100,255);
-					data element.name value: element.totalTrashCollected color:color;
-					data element.name+" PCI: "+string(element.personalCommunicationIndex) value: element.personalCommunicationIndex/10 color:color;
+					data element.name value: element.totalTrashCollected color: color;
+					data element.name+" PCI: "+ string(element.personalCommunicationIndex) 
+							value: element.personalCommunicationIndex/10 color: color;
 				}
 			}
 		}
@@ -774,22 +793,20 @@ experiment EnjoyFreeTime type: gui {
 		display ConcertHall0MusicTastes {
 			chart "ConcertHall0MusicTastes" type: pie {
 				ConcertHall ch <- list(ConcertHall)[0];
-        		data 'Rock' value: ch.musicTasteCount[0];
-        		data 'Metal' value: ch.musicTasteCount[1];
-        		data 'Blues' value: ch.musicTasteCount[2];
-        		data 'Funk' value: ch.musicTasteCount[3];
-        		data 'Hip Hop' value: ch.musicTasteCount[4];
+				
+				loop i from: 0 to: length(musicGenres) - 1 {
+					data musicGenres[i] value: ch.musicTasteCount[i];
+				}
 	        }
 	    }
 	    
 		display ConcertHall1MusicTastes {	        
 			chart "ConcertHall1MusicTastes" type: pie {
 				ConcertHall ch <- list(ConcertHall)[1];
-        		data 'Rock' value: ch.musicTasteCount[0];
-        		data 'Metal' value: ch.musicTasteCount[1];
-        		data 'Blues' value: ch.musicTasteCount[2];
-        		data 'Funk' value: ch.musicTasteCount[3];
-        		data 'Hip Hop' value: ch.musicTasteCount[4];
+        		
+        		loop i from: 0 to: length(musicGenres) - 1 {
+					data musicGenres[i] value: ch.musicTasteCount[i];
+				}
 	        }
 		}
 	}

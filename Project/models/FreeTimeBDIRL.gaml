@@ -563,13 +563,17 @@ species RecycleStation {
 }
 
 species DustBot skills: [moving] control: simple_bdi {
-	//###BDI
+
 	rgb color <- rgb(235, 255, 255);
-	float sightDistance<-50.0;
+	
+	float sightDistance <- 50.0;
+	
     point target;
+    
     int trashCurrentlyHeld;
     int totalTrashCollected;
     int trashCapacity <- 5;
+    
     list<point> knownPubLocations <- [];
     
     bool use_social_architecture <- true;

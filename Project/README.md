@@ -1,6 +1,6 @@
 # Project
 
-The project describes a simulated experiment of agents spending their free time while interacting with each other.
+The project describes a simulated experiment of agents spending their free time while interacting with each other. The model [FreeTime](models/FreeTime.gaml) describes the basic functionality of different people visiting oubs and concert halls. The model [FreeTimeBDIRL](models/FreeTimeBDIRL.gaml) shows the extension of the basic model with `Belief, Desire, Intention` (BDI) agents and a simple reinforcement learning implementation.
 
 ## Agents
 
@@ -56,100 +56,64 @@ At the beginning, only the chill people can have a `generous` value which is hig
 
 The parameters of the experiment offer the options to adjust the size of the grid and the number of agents of all five agent classes. Besides these options, you also get the option to edit the options for the part of the experiment which is shown in the diagrams: you can edit values relevant to the drink invitation. It is possible to change the minimum value of `generous` which is needed to invite someone for a drink. Also, the drink invitation does not always happen if the generosity is big enough; besides the minimum value of `generous`, a drink invitation has a certain chance which can also be editet in the parameters. As a last paremeter, you can change the amount by which the `generous` value is increasedd in case of a drink invitation.
 
-## Challenges
-We made an integration for both of the challenges.
+## Belief, Desire, Intention (BDI)
 
-## Belief, Desire, Intention
+In general, agents of the class `DustBot` try to approach pubs to collect trash which they then bring to the `RecycleStation`.
 
-## Agent
+### DustBot
 
-For the BDI integration, we have the DustBots as a group of Agents able to interact with Pubs to collect trash. Once the trash is collected, it is brought to the Festival Recylce Center.
+For the BDI integration, we have the agent class `DustBot`. The `DustBot` instances are able to interact with every `Pub` to collect trash. Once the trash is collected, it is brought to the `RecycleStation`.
 
-`float sightDistance<-50.0;` Distance at which interaction among DustBots and between DustBots and Pubs can happen
+Each `DustBot` has a given `sightDistance`. Within this distance, it is able to comunicate with other dust bots and pubs (the lower the `sightDistance`, the lower the amount of interactions).
 
-`point target;`
+The dust bots also have a maximum amount of trash which they could collect. As the currently carried trash of each `DustBot` is stored as an instance variable, it is checked that a `DustBot` does not carry more trash than the maximum amount.
 
-`int trashCurrentlyHeld;`Trash currently being transportated by the DustBot
+To realise the BDI functionality, the dust bots are provided with the skill `simple_bdi`.
 
-`int totalTrashCollected;`Total amount of Trash collected through the time
+To express the desire of a `DustBot` to find trash, the initialisation begins with adding the desire `findTrash`. It then wanders around randomly.
 
-`int trashCapacity <- 5;`Amount of Trash each DustBot can transport
-
-`list<point> knownPubLocations <- [];`Memory of known Pubs
-
-`bool use_social_architecture <- true;`BDI feature (communication among DustBots)
-
-`bool use_emotions_architecture <- true;`BDI feature (joy)
-
-`bool use_personality <- true;`BDI feature (to add randomness to the DustBots)
-
-`float openness <- gauss(0.5,0.12);`as above
-
-`float conscientiousness <- gauss(0.5,0.12);`as above
-
-`float extraversion <- gauss(0.5,0.12);`as above
-
-`float agreeableness <- gauss(0.5,0.12);`as above
-
-`float neurotism <- gauss(0.5,0.12);`as above
-
-`float plan_persistence <- 1.0;`as above
-
-`float intention_persistence <- 1.0;`as above
-
-`int personalCommunicationIndex <- 0;`Amount of social interactions held by the DustBot
-
-## System
-
-The DustBot are provided with the skill `simple_bdì`, that allow them to use Beliefs, Desires and Intentions.
-
-The initialization of each of these DustBots begins with adding the desire to find Trash (`findTrash`).
-
-They are able to perceive two targets: other DustBots and Pubs. When another DustBot is perceived, the desire to share information (`shareInformation`) is set with a strenght of 5.0. Otherwise when a Pub is perceived and if it's not empty (`each.trashAccumulated > 0`) and inside the sight distance (`sightDistance`), the joy emotion will be triggered. Once a DustBot is joyous, the desire to share information (`shareInformation`) is set with a strenght of 5.0. The plan `shareInformation` will be explained after.
-
-In this case, since trash has been found, the intention to find it is removed (`remove_intention(findTrash, false)`).
+Dust bots are able to perceive two different target classes: `DustBot` and `Pub`. The perception of agents of different classes results in setting the same desire in different ways:
+* If a `DustBot` is perceived within the `sightDistance`, the desire `shareInformation` will be set with a strength of `5.0`.
+* If a `Pub` with accumulated trash is perceived within the `sightDistance`, it receives the emotion `joy`. Once a DustBot is joyous, the desire `shareInformation` will be set with a strength of `5.0`. In this case, a `Pub` with trash is found and the intention to find trash is removed.
 
 In order to establish a hierarchy in the possible actions, we set two rules:
-`rule belief: pubLocation new_desire: hasTrash strength: 2.0;`
-`rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;`
-The first rule explain that if there`s a belief about a Pub location (not empty of trash), then trash can be found there; the second one allows the DustBot to bring Trash to recycle after Trash has been collected.
+* `rule belief: pubLocation new_desire: hasTrash strength: 2.0;`
+* `rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;`
+The former rule explains that if there is a belief about the location of a `Pub` which has trash, trash can be found there. The letter rule allows the `DustBot` to bring the trash to a `RecycleStation` after the trash has been collected.
 
-Since the communication among these agents can be faulty, they are provided with a simple individual memory of the known Pub locations. When a DustBot is in `wander` state, he will then reach one of the known Pubs to check what`s its Trash status.
+According to the former rule, a `DustBot` moves to a `Pub` which has some trash. Once it reaches the target, it picks up the minimum of the `Pub`'s trash and the trash it can carry. In case the target `Pub` of a `DustBot` is missing, the plan `getTrash` will set the subintention to `choosePub`, forcing the DustBot to operate. Once the maximum trash capacity of a `DustBot` is reached, the letter rule applies and it enters the plan `goToRecycleStation`.
 
-The plan `chooseClosestPub` evaluate which Pub is not empty and select the closest one as target. In this process, the memory will be updated with the knowledge of the closest Pub identified.
+When a `DustBot` has the target `RecycleStation` and reaches its target, it loses the belief `hasTrash` and the intention `bringTrashToRecycle`. The trash collected by the `RecycleStation` and the trash collected by this `DustBot` is then increased by the amount of trash this bot recycled. The trash which is currently held by the `DustBot` is set to zero and it continues to collect more trash.
 
-The plan `getTrash` set the subintention to `choosePub` in case a target it`s missing, forcing the DustBot to operate. Else, if a target Pub is selected, the `do goto target:target` moves the DustBot to the target location. Once there, it can either pick an amount of Trash equal to it`s capacity (`trashCapacity`) or the residual Trash if the Trash in the Pub (`trashAccumulated`) is smaller then the DustBot capacity (e.g.: 13->8->3->0).
+#### DustBots' Communication
 
-Once the maximum Trash capacity of the DustBot (`trashCapacity`) is achieved, the DustBot enter the plan `goToRecycleStation`, as the `rule belief: hasTrash new_desire: bringTrashToRecycle strength: 3.0;` commands.
+Dust bots have a simple communication plan (`shareInformation`) that lets them exchange information about pubs. More precisely, known pubs with trash and known pubs without trash. This communication is achieved by adding a belief of the specific pubs (`knownPub` and `knownEmptyPub`).
 
-One RecycleCenter (`festivalRecycleCenter`) is located in the center of the map to optimize the average distance for any random disposition of the Stalls.
-After imposing the `goto target:` to `festivalRecycleCenter`, once the location is reached, the DustBot lose the belief of `hasTrash` and the intention `bringTrashToRecycle`. The amount of total Trash collected (`festivalRecycleCenter.totalTrashCollected` and `self.totalTrashCollected`) are updated with the amount brought by the DustBot.
-The Trash currently held (`trashCurrentlyHeld`) is set to 0. The bot is now going to collect more Thrash.
+Since the communication between the dust bots can be faulty, each `DustBot` is provided with a simple individual memory of known `Pub` locations. When a `DustBot` is in `wander` state, it will approach one of the known pubs to check the trash status of this `Pub`.
 
-DustBots have a simple communication plan (`shareInformation`), that let them exchange information about Pubs. More precisely, known Pubs with Trash and known Pubs without Trash. This operation is done by adding a belief (`add_belief`) of the specific Pubs (`knownPub` and `knownEmptyPub`).
+### RecycleStation
 
-In order to let the DustBot work, an increasing amount of Trash (`trashAccumulated`) is implemented in the Pub specie.
-Everytime a client of the Pub leaves, a random amount of Trash (`rnd(1,5)`) is allocated into the Pub.
-This let the mechanics of the Party to interact with the BDI interface: everytime the DustBot identify Trash in a Pub, they take it to the Festival Recycle Center.
+One `RecycleStation` is located in the center of the map to optimize the average distance for any random disposition of the Stalls. Dust bots approach it to recycle the rubbish they collected.
 
-A balancing in the number of Guests and DustBots is required in order to keep the Festival empty of Trash.
+### Trash Creation
+
+In order to provide the dust bots with work, each `Pub` has an accumulated amount of trash. Everytime a guest of a `Pub` leaves, the guets leaves a random amount of trash in the `Pub`. Everytime a `DustBot` identifies trash in a `Pub`, a `DustBot` approaches this `Pub` and brings it to the `RecycleStation`.
+
+To keep the observed area free of trash, the instances of the class `Mover` and `DustBot` have to be balanced.
 
 ## Simulation
 
+The first image represents the map of the previously described simulation. The white agents are the dust bots: the bigger the `DustBot`, the more the quantity of trash it currently holds.
+
 <img src="https://user-images.githubusercontent.com/36768662/102253483-a9249500-3f07-11eb-96bb-4aaf0faac92d.png">
 
-The first image represents the map of the simulation with the different species and processes already explained previously.
-The white agents are the DustBots: the bigger the DustBot, the more the quantity of Trash currently held (`trashCurrentlyHeld`).
+This picture shows a balanced setting, as there are no overlapping stalls or isolated stalls. It may happen that the dust bots will not be able to see a `Pub` far away if the sight distance is not high enough. If a Pub is unseen, its trash will be accumulated.
 
-This is a balanced setting, as there are no overlapping of Stalls or isolated Stalls. It may happen that the DustBots won`t be able to see a Pub far away if the sight distance (`sightDistance`) isn`t set properly high enough.
-
-If a Pub is unseen, Trash will be accumulated.
+The second image shows how much Trash is accumulated in each `Pub` (Red and Blue lines) over time. After the 1200th cycle of execution, the dust bots discover the trash in the `Pub` and start to clean it. Once the Pub is empty of trash, the dust bots can keep the whole simulation's trash under control.
 
 <img src="https://user-images.githubusercontent.com/36768662/102253487-a9bd2b80-3f07-11eb-8898-2e2417fc87e3.png">
 
-The second image shows how much Trash is accumulated in each Pub (Red and Blue lines) through the time. After the 1200th cycle of execution, the DustBots discovers the Trash in the Pub and start to clean it. Once the Pub is empty of Trash, the DustBots can keep the whole Festival Trash value under control.
-
-The Blue line represent the second Pub accumulated Trash: it's possible to see that now and then Trash appears, but it is instantly collected by the DustBot. The same behavior will follow after the 5000th cycle for the first Pub (Red line).
+The blue line represents the accumulated trash of the second `Pub`. It is possible to see that every now and then some trash appears but it is instantly collected by a `DustBot`. The same will follow after the 5000th cycle for the first `Pub` (red line).
 
 Even though in this image is not noticeable, in this graph is also represented the general Communication Index (`communicationIndex`) as a Green line. It is increased by 1 everytime a communication among the DustBots happens, but it is represented divided by 1000 as it explodes in the value through time.
 
@@ -178,11 +142,9 @@ If the 'sightDistance' is decreased, DustBot will find more difficult to collect
 
 ## Reinforcement Learning
 
-PartyLovers are now implemented with a random music taste change through `reflex considerNewMusicGenre`.
-The ConcertHalls are now implemented with a trend following algorithm.
-Through time, PartyLovers will move their preference to different music genres, as so will do the ConcertHalls.
+In the extended model [FreeTimeBDIRL](models/FreeTimeBDIRL.gaml), each `PartyLover` changes its music taste randomly through `reflex considerNewMusicGenre`. Each `ConcertHall` is implemented with a trend following algorithm. Over time, both party lovers and concert halls will alter their preference to different music genres.
 
-## Agent
+### Agent
 
 These are the new variables introduced for the `species ConcertHall`:
 

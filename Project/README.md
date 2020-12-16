@@ -107,38 +107,37 @@ The first image represents the map of the previously described simulation. The w
 
 <img src="https://user-images.githubusercontent.com/36768662/102253483-a9249500-3f07-11eb-96bb-4aaf0faac92d.png">
 
-This picture shows a balanced setting, as there are no overlapping stalls or isolated stalls. It may happen that the dust bots will not be able to see a `Pub` far away if the sight distance is not high enough. If a Pub is unseen, its trash will be accumulated.
+This picture shows a balanced setting, as there are no overlapping stalls or isolated stalls. It may happen that the dust bots will not be able to see a `Pub` far away if the sight distance is not high enough. If a `Pub` is unseen, its trash will be accumulated.
 
-The second image shows how much Trash is accumulated in each `Pub` (Red and Blue lines) over time. After the 1200th cycle of execution, the dust bots discover the trash in the `Pub` and start to clean it. Once the Pub is empty of trash, the dust bots can keep the whole simulation's trash under control.
+### Global Trash Chart
+
+The second image shows how much trash is accumulated in each `Pub` (red and blue graphs) over time. After cycle 1200 of the execution, the dust bots discover the trash in the `Pub` and start to clean it. Once this `Pub0` is empty of trash, the dust bots can keep the whole simulation's trash under control.
 
 <img src="https://user-images.githubusercontent.com/36768662/102253487-a9bd2b80-3f07-11eb-8898-2e2417fc87e3.png">
 
-The blue line represents the accumulated trash of the second `Pub`. It is possible to see that every now and then some trash appears but it is instantly collected by a `DustBot`. The same will follow after the 5000th cycle for the first `Pub` (red line).
+The blue line represents the accumulated trash of `Pub1`. Every now and then, some trash appears for this pub. However, the trash will be instantly collected by a `DustBot`. Once the huge trash amount of `Pub0` is cleared (around cycle 4600), it has the same status as its trash is removed quite soon.
 
-Even though in this image is not noticeable, in this graph is also represented the general Communication Index (`communicationIndex`) as a Green line. It is increased by 1 everytime a communication among the DustBots happens, but it is represented divided by 1000 as it explodes in the value through time.
+Even though it is not noticeable that strongly in this image, the chart also includes the general `Communication Index` as a green graph. Every communication between different dust bots increases this index by 1. As this index explodes over time, its value is divided by 1000.
 
-In the following image a different behavior from another execution of the same experiment can be seen:
+The following image shows the chart of a simulation where the increase of the `Communication Index` can be seen. After the discovery of `Pub0` (red graph), the communication between dust bots and therefore, the `Communication Index` (green graph) increases. Once `Pub1` is discovered by the dust bots, they also communicate about `Pub1`.
 
 <img src="https://user-images.githubusercontent.com/36768662/102253479-a75ad180-3f07-11eb-8bcf-41ffd5f0a75f.png">
 
-Here the Red Pub got discovered after 1400 cycles, and as soon as it happens the Communication Index (Green line) increases. The same process happens goes for the Blue Pub at 3000 cycles. After being discovered, they are constantly checked for Trash.
+### Trash Currently Held Chart
 
-From the same simulation of the first two images:
+The following image shows a chart shows the trash which is held by each `DustBot` over time. The graph shows that the maximum capacity of each `DustBot` is five. A few cycles after collecting the trash, the trash value becomes zero again. This is when a `DustBot` unloads its trash at the `RecycleStation`.
 
 <img src="https://user-images.githubusercontent.com/36768662/102253489-aa55c200-3f07-11eb-8fc5-7bfc1a3b112d.png">
 
-This graph represents the Trash currently held by each DustBot through time. As their maximum capacity is 5 in this simulation, they can't hold more Trash, as shown in the graph.
-The DustBot0 (Red line) wasn't active for the first 1500 cycles, but as soon as the second Pub is discovered, he starts to clean it from the Trash (as noticeable in the first figure).
+`DustBot0` (red graph) was not active for nearly 1500 cycles. As soon as the second Pub is discovered, it starts to free it from trash (compare first image of BDI section).
 
-As regards how each DustBot performed:
+### Total Trash Chart
+
+The following chart shows how the different dust bots performed individually. The performance of each `DustBot` is shown with one unique colour. Each colour shows two graphs: the trash which got collected by this bot and the personal communication index (PCI) of this bot. The three higher graphs in this image depict the total trash collected by each `DustBot` and the lower ones show the PCI.
 
 <img src="https://user-images.githubusercontent.com/36768662/102253484-a9249500-3f07-11eb-8fd7-84778188e0b1.png">
 
-With the same color are represented the total Trash collected by one DustBot and its individual Communication Index (`personalCommunicationIndex`). To be more precise, the 3 higher lines represents the total Trash collected by the DustBots, while the lower ones the corresponding Communication Index. The personal Communication Index are shown divided by 10, as their value explodes through time.
-
-Here (DustBot2 PCI, Grey line), in comparison with the previous graph (DustBot2 Trash currently held, Green line), confirm that the first Trash collection for DustBot2 happened around the 1000th cycle. This happened because it wasn't able to communicate with the other DustBots, as it's shown in its low PCI (`personalCommunicationIndex`), due to the distance.
-
-If the 'sightDistance' is decreased, DustBot will find more difficult to collect Trash from Pubs. Simulations of this possibility create a big amount of Trash at the beginning, until the Pub is discovered. A solution can be applying an increasing 'sightDistance' that is proportional to the total Trash in the Festival. This would allow, in case some Trash accumulates in a hidden part of the Map, to let this Pubs to be discovered.
+This chart confirms an observation from the previous chart (Trash Currently Held): `DustBot2` (green graph) started to perform only around cycle 1000. As this later activity of dust bots happen because they do not discover a near `Pub` and also do not interact with other dust bots, a `sightDistance` which is too low can lead to an accumulation of trash. To decrease an accumulation of trash, the `sightDistance` can be increased.
 
 ## Reinforcement Learning
 

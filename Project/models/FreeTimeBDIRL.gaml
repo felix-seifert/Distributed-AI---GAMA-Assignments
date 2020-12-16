@@ -622,7 +622,7 @@ species DustBot skills: [moving] control: simple_bdi {
     	
         list<point> possiblePubs <- get_beliefs_with_name(pubAtLocation) 
         		collect (point(get_predicate(mental_state (each)).values["location_value"]));
-        add possiblePubs[rnd(0,length(possiblePubs)-1)] to: knownPubLocations;
+        add possiblePubs[rnd(0, length(possiblePubs)-1)] to: knownPubLocations;
         
         list<point> emptyPubs <- get_beliefs_with_name(emptyPubLocation) 
         		collect (point(get_predicate(mental_state (each)).values["location_value"]));
